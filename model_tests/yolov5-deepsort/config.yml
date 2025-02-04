@@ -2,7 +2,7 @@ yolov5_deepsort:
  
  detector:
   model_name: 'yolov5n'
-  tracked_class: 'person'
+  tracked_class: 'car'
   downscale_factor: 2
   confidence_threshold: 0.1
   disp_obj_detect_box: True   # Set to true if you want to view the detections from object detector 
