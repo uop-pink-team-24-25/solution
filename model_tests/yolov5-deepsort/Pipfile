@@ -6,8 +6,9 @@ name = "pypi"
 [packages]
 ultralytics = "*"
 deep-sort-realtime = "*"
+gitpython = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.13"
+python_version = "3"

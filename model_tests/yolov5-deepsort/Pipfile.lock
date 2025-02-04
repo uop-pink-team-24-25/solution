@@ -1,11 +1,11 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "0c8c6f71f4c8cb3907f5c4c26eaa332dd468534c08612dd60bcd616984178b33"
+            "sha256": "7210e0f0ec9879df306798526ab64bd8b1fdecae63e522a70e685c41f338d662"
         },
         "pipfile-spec": 6,
         "requires": {
-            "python_version": "3.13"
+            "python_version": "3"
         },
         "sources": [
             {
@@ -269,6 +269,23 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==2025.2.0"
+        },
+        "gitdb": {
+            "hashes": [
+                "sha256:5ef71f855d191a3326fcfbc0d5da835f26b13fbcba60c32c21091c349ffdb571",
+                "sha256:67073e15955400952c6565cc3e707c554a4eea2e428946f7a4c162fab9bd9bcf"
+            ],
+            "markers": "python_version >= '3.7'",
+            "version": "==4.0.12"
+        },
+        "gitpython": {
+            "hashes": [
+                "sha256:9e0e10cda9bed1ee64bc9a6de50e7e38a9c9943241cd7f585f6df3ed28011110",
+                "sha256:c87e30b26253bf5418b01b0660f818967f3c503193838337fe5e573331249269"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7'",
+            "version": "==3.1.44"
         },
         "idna": {
             "hashes": [
@@ -1003,6 +1020,14 @@
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
             "version": "==1.17.0"
         },
+        "smmap": {
+            "hashes": [
+                "sha256:26ea65a03958fa0c8a1c7e8c7a58fdc77221b8910f6be2131affade476898ad5",
+                "sha256:b30115f0def7d7531d22a0fb6502488d879e75b260a9db4d0819cfb25403af5e"
+            ],
+            "markers": "python_version >= '3.7'",
+            "version": "==5.0.2"
+        },
         "sympy": {
             "hashes": [
                 "sha256:9cebf7e04ff162015ce31c9c6c9144daa34a93bd082f54fd8f12deca4f47515f",
@@ -1100,12 +1125,12 @@
         },
         "ultralytics": {
             "hashes": [
-                "sha256:762cf16d4eede716d7e0efddbfebcffa28b9ddc714a3e86f219ef93572d10812",
-                "sha256:fb407a9feb0027e5c5ba3f24cb0ae86de3182c086609bebbf59443735ec160ef"
+                "sha256:560cc54236190de03a1a1343a913d75406c39d425ff3062b65c7b59537424f5e",
+                "sha256:5b4e622a9e084a7956fd030ebf288e02f082b26bfe84ac1e9276e9ef5f6cf99e"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==8.3.70"
+            "version": "==8.3.71"
         },
         "ultralytics-thop": {
             "hashes": [
