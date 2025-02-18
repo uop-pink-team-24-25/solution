@@ -1,0 +1,8 @@
+locate your virtualenv folder (on windows i think it's c/users/<user>/virtualenvs)
+
+delete it
+
+cd to the top level directory of this repo
+
+pipenv shell 
+pipenv install 
