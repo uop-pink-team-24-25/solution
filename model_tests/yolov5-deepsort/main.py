@@ -29,6 +29,16 @@ tracker = DeepSortTracker()
 
 track_history = {}    # Define a empty dictionary to store the previous center locations for each track ID
 
+objects_no_longer_in_scene = {}
+
+object_start_frame = {}
+
+object_end_frame = {}
+
+track_frame_length = {}
+
+frame_count = 0;
+
 while cap.isOpened():
 
     success, img = cap.read() # Read the image frame from data source 
@@ -37,11 +47,43 @@ while cap.isOpened():
     
     # Object Detection
     results = object_detector.run_yolo(img)  # run the yolo v5 object detector 
+    
+    #TODO: Maybe put in here a check to see if an object is new and to start counting its frames
+
     detections , num_objects= object_detector.extract_detections(results, img, height=img.shape[0], width=img.shape[1]) # Plot the bounding boxes and extract detections (needed for DeepSORT) and number of relavent objects detected
 
+    #results is a tuple
+    #num_objects is an int
+    #detections is a list
+    #tracks_current is a list
+
+#    print("type of results " + str(results))
+#    print("type of num_objects " + str(num_objects))
+#    print("type of detections " + str(detections))
+#
     # Object Tracking
-    tracks_current = tracker.object_tracker.update_tracks(detections, frame=img)#
+    tracks_current = tracker.object_tracker.update_tracks(detections, frame=img)
     tracker.display_track(track_history , tracks_current , img)
+
+    to_be_destroyed = []
+
+    for key in track_history:
+        if(not any(key == value.track_id for value in tracks_current)):
+            to_be_destroyed.append(key)
+        elif key not in object_start_frame:
+            object_start_frame[key] = frame_count
+
+    for key in to_be_destroyed:
+        objects_no_longer_in_scene[key] = track_history.get(key, [])
+        del track_history[key]
+        object_end_frame[key] = frame_count
+    #print(type(tracks_current[0].track_id))
+
+    #DEBUG CODE BELOW HERE
+    for key in objects_no_longer_in_scene:
+        print("Car ID " + key + " entered at frame: " + str(object_start_frame[key]) + " and left at frame: " +  str(object_end_frame[key]))
+    #END
+
     
     # FPS Calculation
     end_time = time.perf_counter()
@@ -58,9 +100,13 @@ while cap.isOpened():
     
     cv2.imshow('img',img)
 
+    
+
 
     if cv2.waitKey(1) & 0xFF == 27:
         break
+
+    frame_count += 1
 
 
 # Release and destroy all windows before termination
