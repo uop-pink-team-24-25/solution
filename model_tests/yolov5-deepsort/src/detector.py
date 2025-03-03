@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import yaml
 
-with open('config.yml' , 'r') as f:
+with open('model_tests\yolov5-deepsort\config.yml' , 'r') as f:
     config =yaml.safe_load(f)['yolov5_deepsort']['detector']
 
 TRACKED_CLASS = config['tracked_class']
