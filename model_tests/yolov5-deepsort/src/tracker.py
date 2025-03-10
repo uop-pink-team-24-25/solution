@@ -110,6 +110,9 @@ class DeepSortTracker():
             bbox = location[:4].astype(int)
             bbox_center = ((bbox[0] + bbox[2]) // 2, (bbox[1] + bbox[3]) // 2)
 
+            if(track_id == "2"):
+                print(bbox)
+
             # Retrieve the previous center location, if available
             prev_centers = track_history.get(track_id ,[])
             prev_centers.append(bbox_center)

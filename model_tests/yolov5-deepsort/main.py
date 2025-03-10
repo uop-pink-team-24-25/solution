@@ -7,6 +7,7 @@ import yaml
 from src.detector import YOLOv5Detector
 from src.tracker import DeepSortTracker
 from src.dataloader import cap
+from src.colour_getter import get_colour_from_subimage
 
 # Parameters from config.yml file
 with open('config.yml' , 'r') as f:
@@ -37,7 +38,11 @@ object_end_frame = {}
 
 track_frame_length = {}
 
-frame_count = 0;
+frame_count = 1;
+
+vehicle_type = {};
+
+vehicle_colour = {};
 
 while cap.isOpened():
 
@@ -65,24 +70,39 @@ while cap.isOpened():
     tracks_current = tracker.object_tracker.update_tracks(detections, frame=img)
     tracker.display_track(track_history , tracks_current , img)
 
+    #TODO: get the subimage defined by the bounding boxes from the tracker/detector
+    # Pass the subimage to the vehicle classifier model and the average colour subroutine - ONCE
+
     to_be_destroyed = []
 
-    for key in track_history:
-        if(not any(key == value.track_id for value in tracks_current)):
-            to_be_destroyed.append(key)
-        elif key not in object_start_frame:
-            object_start_frame[key] = frame_count
-
-    for key in to_be_destroyed:
-        objects_no_longer_in_scene[key] = track_history.get(key, [])
-        del track_history[key]
-        object_end_frame[key] = frame_count
-    #print(type(tracks_current[0].track_id))
-
-    #DEBUG CODE BELOW HERE
-    for key in objects_no_longer_in_scene:
-        print("Car ID " + key + " entered at frame: " + str(object_start_frame[key]) + " and left at frame: " +  str(object_end_frame[key]))
-    #END
+    if(frame_count % 3 == 0):
+    
+        for key in track_history:
+            if(not any(key == value.track_id for value in tracks_current)): #if the key has left the scene
+                to_be_destroyed.append(key)
+            elif key not in object_start_frame:
+                object_start_frame[key] = frame_count
+    
+        for key in to_be_destroyed: #deal with the tracks which have left the scene
+            objects_no_longer_in_scene[key] = track_history.get(key, [])
+            del track_history[key]
+            object_end_frame[key] = frame_count
+        #print(type(tracks_current[0].track_id))
+        
+        #TODO: get the subimage defined by the bounding boxes from the tracker/detector
+        # Pass the subimage to the vehicle classifier model and the average colour subroutine - ONCE
+    
+        for key in track_history: #should have got rid of the ones not in the scene
+            if(key not in vehicle_type):
+               print("detecting vehicle type for " + str(key));
+               vehicle_type[key] = "car"
+               vehicle_colour = "red"
+               get_colour_from_subimage(key, tracks_current, img)
+    
+        #DEBUG CODE BELOW HERE
+        for key in objects_no_longer_in_scene:
+            print("Car ID " + key + " entered at frame: " + str(object_start_frame[key]) + " and left at frame: " +  str(object_end_frame[key]))
+        #END
 
     
     # FPS Calculation
