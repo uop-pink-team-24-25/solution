@@ -3,10 +3,20 @@ import time
 import os 
 import sys
 import yaml
+import webcolors
 
 from src.detector import YOLOv5Detector
 from src.tracker import DeepSortTracker
 from src.dataloader import cap
+from src.colour_getter import get_colour_from_subimage
+
+colour_names = webcolors.names(webcolors.CSS3)
+colour_codes = []
+for colour in colour_names:
+    colour_codes.append(webcolors.name_to_hex(colour))
+
+colour_dict = list(zip(colour_names, colour_codes)) 
+#needed for the colour getting. This is declared here because python doesn't have constants so it's passed in
 
 # Parameters from config.yml file
 with open('config.yml' , 'r') as f:
@@ -29,6 +39,20 @@ tracker = DeepSortTracker()
 
 track_history = {}    # Define a empty dictionary to store the previous center locations for each track ID
 
+objects_no_longer_in_scene = {}
+
+object_start_frame = {}
+
+object_end_frame = {}
+
+track_frame_length = {}
+
+frame_count = 1;
+
+vehicle_type = {};
+
+vehicle_colour = {};
+
 while cap.isOpened():
 
     success, img = cap.read() # Read the image frame from data source 
@@ -37,11 +61,59 @@ while cap.isOpened():
     
     # Object Detection
     results = object_detector.run_yolo(img)  # run the yolo v5 object detector 
+    
+    #TODO: Maybe put in here a check to see if an object is new and to start counting its frames
+
     detections , num_objects= object_detector.extract_detections(results, img, height=img.shape[0], width=img.shape[1]) # Plot the bounding boxes and extract detections (needed for DeepSORT) and number of relavent objects detected
 
+    #results is a tuple
+    #num_objects is an int
+    #detections is a list
+    #tracks_current is a list
+
+#    print("type of results " + str(results))
+#    print("type of num_objects " + str(num_objects))
+#    print("type of detections " + str(detections))
+#
     # Object Tracking
-    tracks_current = tracker.object_tracker.update_tracks(detections, frame=img)#
+    tracks_current = tracker.object_tracker.update_tracks(detections, frame=img)
     tracker.display_track(track_history , tracks_current , img)
+
+    #TODO: get the subimage defined by the bounding boxes from the tracker/detector
+    # Pass the subimage to the vehicle classifier model and the average colour subroutine - ONCE
+
+    to_be_destroyed = []
+
+    if(frame_count % 2 == 0):
+    
+        for key in track_history:
+            if(not any(key == value.track_id for value in tracks_current)): #if the key has left the scene
+                to_be_destroyed.append(key)
+            elif key not in object_start_frame:
+                object_start_frame[key] = frame_count
+    
+        for key in to_be_destroyed: #deal with the tracks which have left the scene
+            objects_no_longer_in_scene[key] = track_history.get(key, [])
+            del track_history[key]
+            object_end_frame[key] = frame_count
+        #print(type(tracks_current[0].track_id))
+        
+        #TODO: get the subimage defined by the bounding boxes from the tracker/detector
+        # Pass the subimage to the vehicle classifier model and the average colour subroutine - ONCE
+    
+        for key in track_history: #should have got rid of the ones not in the scene
+            if(key not in vehicle_type):
+               print("detecting vehicle type for " + str(key));
+               vehicle_type[key] = "car" #TODO: sort out model, perhaps get the subimage before here and share between the two?
+               vehicle_colour[key] = get_colour_from_subimage(key, tracks_current, img, colour_dict) #TODO: FIX DETECTION BOUNDARIES AND DO MEAN
+    
+        #DEBUG CODE BELOW HERE
+        for key in objects_no_longer_in_scene:
+            print("Car ID " + key + " entered at frame: " + str(object_start_frame[key]) + " and left at frame: " +  str(object_end_frame[key]) + " with colour: " + str(vehicle_colour[key]))
+
+        print("THE CARS CURRENTLY IN THE SCENE ARE: " + str([track.track_id for track in tracks_current]))
+        #END
+
     
     # FPS Calculation
     end_time = time.perf_counter()
@@ -58,9 +130,13 @@ while cap.isOpened():
     
     cv2.imshow('img',img)
 
+    
+
 
     if cv2.waitKey(1) & 0xFF == 27:
         break
+
+    frame_count += 1
 
 
 # Release and destroy all windows before termination
