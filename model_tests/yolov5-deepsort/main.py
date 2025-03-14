@@ -3,11 +3,20 @@ import time
 import os 
 import sys
 import yaml
+import webcolors
 
 from src.detector import YOLOv5Detector
 from src.tracker import DeepSortTracker
 from src.dataloader import cap
 from src.colour_getter import get_colour_from_subimage
+
+colour_names = webcolors.names(webcolors.CSS3)
+colour_codes = []
+for colour in colour_names:
+    colour_codes.append(webcolors.name_to_hex(colour))
+
+colour_dict = list(zip(colour_names, colour_codes)) 
+#needed for the colour getting. This is declared here because python doesn't have constants so it's passed in
 
 # Parameters from config.yml file
 with open('config.yml' , 'r') as f:
@@ -75,7 +84,7 @@ while cap.isOpened():
 
     to_be_destroyed = []
 
-    if(frame_count % 3 == 0):
+    if(frame_count % 2 == 0):
     
         for key in track_history:
             if(not any(key == value.track_id for value in tracks_current)): #if the key has left the scene
@@ -95,13 +104,14 @@ while cap.isOpened():
         for key in track_history: #should have got rid of the ones not in the scene
             if(key not in vehicle_type):
                print("detecting vehicle type for " + str(key));
-               vehicle_type[key] = "car"
-               vehicle_colour = "red"
-               get_colour_from_subimage(key, tracks_current, img)
+               vehicle_type[key] = "car" #TODO: sort out model, perhaps get the subimage before here and share between the two?
+               vehicle_colour[key] = get_colour_from_subimage(key, tracks_current, img, colour_dict) #TODO: FIX DETECTION BOUNDARIES AND DO MEAN
     
         #DEBUG CODE BELOW HERE
         for key in objects_no_longer_in_scene:
-            print("Car ID " + key + " entered at frame: " + str(object_start_frame[key]) + " and left at frame: " +  str(object_end_frame[key]))
+            print("Car ID " + key + " entered at frame: " + str(object_start_frame[key]) + " and left at frame: " +  str(object_end_frame[key]) + " with colour: " + str(vehicle_colour[key]))
+
+        print("THE CARS CURRENTLY IN THE SCENE ARE: " + str([track.track_id for track in tracks_current]))
         #END
 
     

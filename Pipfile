@@ -8,6 +8,7 @@ ultralytics = "*"
 deep-sort-realtime = "*"
 gitpython = "*"
 webcolors = "*"
+colour-converter = "*"
 
 [dev-packages]
 
