@@ -3,12 +3,17 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[[source]]
+url = "https://download.pytorch.org/whl/cu121"
+verify_ssl = true
+name = "pytorch"
+
 [packages]
 ultralytics = "*"
 deep-sort-realtime = "*"
 gitpython = "*"
-
-[dev-packages]
+torch = {version = ">=2.0.1", index = "pytorch"}
+torchvision = {version = ">=0.15.2", index = "pytorch"}
 
 [requires]
 python_version = "3"

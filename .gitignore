@@ -134,3 +134,5 @@ cython_debug/
 
 #PyTorch tensor file
 *.pt
+model_tests/yolov5-deepsort/data/data.mp4
+/model_tests/yolov5-deepsort/data
