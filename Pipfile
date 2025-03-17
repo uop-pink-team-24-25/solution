@@ -14,6 +14,12 @@ deep-sort-realtime = "*"
 gitpython = "*"
 torch = {version = ">=2.0.1", index = "pytorch"}
 torchvision = {version = ">=0.15.2", index = "pytorch"}
+webcolors = "*"
+colour-converter = "*"
+scikit-learn = "*"
+
+[dev-packages]
+matplotlib = "*"
 
 [requires]
 python_version = "3"
