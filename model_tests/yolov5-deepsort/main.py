@@ -94,22 +94,33 @@ while cap.isOpened():
                 to_be_destroyed.append(key)
             elif key not in object_start_frame:
                 object_start_frame[key] = frame_count
+            elif((key in object_end_frame) & (key not in vehicle_colour)):
+                to_be_destroyed.append(key)
     
         for key in to_be_destroyed: #deal with the tracks which have left the scene
             objects_no_longer_in_scene[key] = track_history.get(key, [])
             del track_history[key]
             object_end_frame[key] = frame_count
+            if((key in object_end_frame) & (key not in vehicle_colour)):
+                del object_start_frame[key]
+                del object_end_frame[key]
+                del objects_no_longer_in_scene[key]
+                # it shouldn't be in vehicle_colour or vehicle_type
+
         #print(type(tracks_current[0].track_id))
         
         #TODO: get the subimage defined by the bounding boxes from the tracker/detector
         # Pass the subimage to the vehicle classifier model and the average colour subroutine - ONCE
     
         for key in track_history: #should have got rid of the ones not in the scene
-            if(key not in vehicle_type):
+            if(key not in vehicle_colour):
                 if(frame_count - object_start_frame[key] > 3):
                     print("detecting vehicle type for " + str(key));
+                    vehicle_colour_local, subimage = get_colour_from_subimage(key, tracks_current, img, colour_dict) 
+                    if(vehicle_colour_local == "AGAIN"):
+                        continue
+                    vehicle_colour[key] = vehicle_colour_local
                     vehicle_type[key] = "car" #TODO: sort out model, perhaps get the subimage before here and share between the two?
-                    vehicle_colour[key] = get_colour_from_subimage(key, tracks_current, img, colour_dict) #TODO: FIX DETECTION BOUNDARIES AND DO MEAN
     
         #DEBUG CODE BELOW HERE
         for key in objects_no_longer_in_scene:
