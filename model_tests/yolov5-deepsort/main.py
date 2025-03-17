@@ -14,6 +14,9 @@ from src.detector import YOLOv5Detector
 from src.tracker import DeepSortTracker
 from src.dataloader import cap  # Video source
 
+from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsEllipseItem, QGraphicsTextItem
+from PyQt6.QtGui import QColor, QBrush
+
 # Load configuration
 with open('model_tests/yolov5-deepsort/config.yml', 'r') as f:
     config = yaml.safe_load(f)['yolov5_deepsort']['main']
@@ -25,12 +28,18 @@ DISP_OBJ_COUNT = config['disp_obj_count']
 object_detector = YOLOv5Detector(model_name=YOLO_MODEL_NAME)
 tracker = DeepSortTracker()
 
+VIDEO_MAX_WIDTH = 900   # Change this value for different video widths
+VIDEO_MAX_HEIGHT = 800  # Change this value for different video heights
+
 
 class ProcessingThread(QThread):
     """
     Runs YOLOv5 & DeepSORT in a background thread.
     """
     detection_complete = pyqtSignal(np.ndarray, int)  # Emit processed frame & FPS
+    
+    # 🔹 Adjustable video display size
+
 
     def __init__(self):
         super().__init__()
@@ -74,19 +83,25 @@ class VideoApp(QWidget):
     """
     Main application window for displaying video, graph, and buttons.
     """
+    
     def __init__(self):
+        
         super().__init__()
-
-        self.setWindowTitle("Vehicle Detection & Tracking (Optimized)")
+        
+        self.setWindowTitle("Vehicle Detection & Tracking")
         self.setGeometry(100, 100, 900, 700)  # Adjust window size
+
 
         # Grid Layout
         self.layout = QGridLayout()
 
         # QLabel for video
+        # QLabel for video (with max size)
         self.video_label = QLabel(self)
         self.video_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.video_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.video_label.setScaledContents(True)
+        self.video_label.setMaximumSize(VIDEO_MAX_WIDTH, VIDEO_MAX_HEIGHT) 
         self.layout.addWidget(self.video_label, 0, 0, 1, 2)  # Video spans two columns
 
         # FPS Display (Above the chart)
@@ -118,13 +133,28 @@ class VideoApp(QWidget):
         
         
         # Graph Widget (Centered)
+        # Add Bar Chart (Vehicle Count)
         self.graph_widget = pg.PlotWidget()
+        self.graph_widget.setTitle("Vehicle Count")
         self.graph_widget.setBackground(None)
         self.graph_widget.setYRange(0, 10)
         self.graph_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.graph_widget.setFixedWidth(400)
         self.graph_widget.setFixedHeight(200)
-        self.layout.addWidget(self.graph_widget, 2, 0, 1, 2)  # Spans two columns
+        self.layout.addWidget(self.graph_widget, 2, 0, 1, 1)  # Left side
+
+        # Pie Chart (Using QGraphicsView instead of PyQtGraph)
+        self.pie_chart_view = QGraphicsView()
+        self.pie_chart_view.setFixedWidth(200)
+        self.pie_chart_view.setFixedHeight(200)
+        self.pie_chart_view.setStyleSheet("background: transparent;")  # Transparent Background
+
+        # Create a scene for the pie chart
+        self.pie_scene = QGraphicsScene()
+        self.pie_chart_view.setScene(self.pie_scene)
+
+        # Add Pie Chart to Layout (Right of Bar Chart)
+        self.layout.addWidget(self.pie_chart_view, 2, 1, 1, 1)  # Position correctly
 
         # Apply layout
         self.setLayout(self.layout)
@@ -171,20 +201,58 @@ class VideoApp(QWidget):
 
         # Update QLabel with the processed image (with bounding boxes)
         self.video_label.setPixmap(QPixmap.fromImage(qimg))
+        
+        def resizeEvent(self, event):
+            """Resize video dynamically while keeping it within limits"""
+            if self.latest_displayed_frame is not None:
+                self.update_video_display(self.latest_displayed_frame)
+            self.video_label.adjustSize()  # 🔹 Ensure QLabel resizes properly
+            event.accept()
+        
+    def update_video_display(self, img):
+        """Updates the QLabel with the correctly scaled video frame."""
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        h, w, ch = img.shape
+        bytes_per_line = ch * w
+        qimg = QImage(img.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+
+        # Scale video to fit QLabel properly
+        max_width = min(self.video_label.width(), VIDEO_MAX_WIDTH)  # Max width 800px
+        max_height = min(self.video_label.height(), VIDEO_MAX_HEIGHT)  # Max height 450px
+
+        scaled_qpixmap = QPixmap.fromImage(qimg).scaled(max_width, max_height,
+                                                        Qt.AspectRatioMode.KeepAspectRatio,
+                                                        Qt.TransformationMode.SmoothTransformation)
+
+        self.video_label.setPixmap(scaled_qpixmap)
+
+
 
     def processed_frame_received(self, img, fps):
         """Receives processed frame (with bounding boxes) and updates UI."""
         self.latest_displayed_frame = img  # Store the processed frame for the next update
         self.fps_label.setText(f"FPS: {fps}")
 
+        # Convert frame to display format
+        self.update_video_display(img)
+
         # 🔹 Simulated Test Data for Graph 🔹
-        test_vehicle_counts = [2, 5, 7, 3, 9]  # Example: 5 vehicle categories (Cars, Trucks, Bikes, etc.)
+         # Example: 5 vehicle categories (Cars, Trucks, Bikes, etc.)
 
         # 🔹 Or, if you have real detection data, use detections:
         # test_vehicle_counts = [len(detections)] * 5  # Example: All bars show total detections
-
+        test_vehicle_counts = [2, 5, 7, 3, 9] 
+        for i in range(len(test_vehicle_counts)):  # Modify list correctly
+            num = random.randint(0, 2)
+            if num == 1:
+                test_vehicle_counts[i] += 1
+            elif num == 2 and test_vehicle_counts[i] > 0:
+                test_vehicle_counts[i] -= 1
         self.update_graph(test_vehicle_counts)  # Update the graph
-
+        
+        self.update_pie_chart(test_vehicle_counts)
+        self.graph_widget.repaint()  # Force UI refresh
+        self.pie_chart_view.viewport().update()  # Force pie chart to redraw
         # Convert frame to display format
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w, ch = img.shape
@@ -197,6 +265,46 @@ class VideoApp(QWidget):
     def update_graph(self, data):
         """Updates the graph with new test data."""
         self.bar_graph.setOpts(height=data)
+        
+
+    def update_pie_chart(self, data):
+        """Updates the pie chart with vehicle category counts."""
+        self.pie_scene.clear()  # Clear previous slices
+
+        categories = ["Cars", "Trucks", "Motorbikes", "Buses", "Others"]
+        total = sum(data)
+
+        if total == 0:
+            return  # Avoid division by zero
+
+        start_angle = 0  # Start at 0 degrees
+        colors = [QColor("red"), QColor("blue"), QColor("green"), QColor("yellow"), QColor("purple")]
+
+        for i, value in enumerate(data):
+            if value == 0:
+                continue  # Skip empty categories
+
+            angle = int((value / total) * 360 * 16)  # Convert to QGraphicsScene angle format
+
+            # Create Pie Slice
+            pie_slice = QGraphicsEllipseItem(-50, -50, 100, 100)  # Centered
+            pie_slice.setStartAngle(start_angle)
+            pie_slice.setSpanAngle(angle)
+            pie_slice.setBrush(QBrush(colors[i]))  # Set color
+
+            self.pie_scene.addItem(pie_slice)  # Add slice to scene
+
+            # Add Labels **to the right of the pie chart**
+            label = QGraphicsTextItem(f"{categories[i]} ({value})")
+            label.setPos(60, i * 20 - 40)  # Fixed position on the right
+            label.setDefaultTextColor(QColor("white"))  # Make it readable
+            self.pie_scene.addItem(label)
+
+            start_angle += angle  # Move to next slice
+
+        self.pie_chart_view.viewport().update()  # Force redraw
+
+
 
     def toggle_video(self):
         """Pause or resume the video."""
