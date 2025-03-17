@@ -5,7 +5,7 @@ yolov5_deepsort:
   tracked_class: 'car'
   downscale_factor: 2
   confidence_threshold: 0.1
-  disp_obj_detect_box: True   # Set to true if you want to view the detections from object detector 
+  disp_obj_detect_box: False   # Set to true if you want to view the detections from object detector 
  
  tracker:
   max_age : 30                # Maximum number of frames to keep a track alive without new detections. Default is 30
@@ -24,7 +24,7 @@ yolov5_deepsort:
   today: None                 # Optional argument to set the current date. This is used to calculate the age of each track in days. If not provided, the current date is used.
   
   #tracker visualization parameters
-  disp_tracks: True           # Set to True if you want to display tracks
+  disp_tracks: False          # Set to True if you want to display tracks
   disp_obj_track_box: True    # Set to True if you want to display the object tracking box
   obj_tack_color: (51,255,255) # Track color in BGR format 
   obj_track_box_color: (0,0,255)  # Track box color in BGR Format 

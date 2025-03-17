@@ -66,6 +66,8 @@ while cap.isOpened():
 
     detections , num_objects= object_detector.extract_detections(results, img, height=img.shape[0], width=img.shape[1]) # Plot the bounding boxes and extract detections (needed for DeepSORT) and number of relavent objects detected
 
+    print("DETECTIONS:\n" + str(detections))
+
     #results is a tuple
     #num_objects is an int
     #detections is a list
@@ -76,6 +78,7 @@ while cap.isOpened():
 #    print("type of detections " + str(detections))
 #
     # Object Tracking
+
     tracks_current = tracker.object_tracker.update_tracks(detections, frame=img)
     tracker.display_track(track_history , tracks_current , img)
 
@@ -103,9 +106,10 @@ while cap.isOpened():
     
         for key in track_history: #should have got rid of the ones not in the scene
             if(key not in vehicle_type):
-               print("detecting vehicle type for " + str(key));
-               vehicle_type[key] = "car" #TODO: sort out model, perhaps get the subimage before here and share between the two?
-               vehicle_colour[key] = get_colour_from_subimage(key, tracks_current, img, colour_dict) #TODO: FIX DETECTION BOUNDARIES AND DO MEAN
+                if(frame_count - object_start_frame[key] > 3):
+                    print("detecting vehicle type for " + str(key));
+                    vehicle_type[key] = "car" #TODO: sort out model, perhaps get the subimage before here and share between the two?
+                    vehicle_colour[key] = get_colour_from_subimage(key, tracks_current, img, colour_dict) #TODO: FIX DETECTION BOUNDARIES AND DO MEAN
     
         #DEBUG CODE BELOW HERE
         for key in objects_no_longer_in_scene:
