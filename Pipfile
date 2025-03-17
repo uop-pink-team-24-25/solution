@@ -7,8 +7,12 @@ name = "pypi"
 ultralytics = "*"
 deep-sort-realtime = "*"
 gitpython = "*"
+webcolors = "*"
+colour-converter = "*"
+scikit-learn = "*"
 
 [dev-packages]
+matplotlib = "*"
 
 [requires]
 python_version = "3"
