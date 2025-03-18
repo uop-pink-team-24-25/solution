@@ -17,6 +17,7 @@ torchvision = {version = ">=0.15.2", index = "pytorch"}
 webcolors = "*"
 colour-converter = "*"
 scikit-learn = "*"
+ffmpeg-python = "*"
 
 [dev-packages]
 matplotlib = "*"

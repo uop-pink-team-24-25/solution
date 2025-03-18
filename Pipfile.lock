@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "fb85ba6a58310057220f1408ec30c756c6a28d695eeb0052e4ebb0d91e3dece5"
+            "sha256": "7c9247a927b8022870956d6f5e0072ddba0d0d9af155d30388d8e6d94509bac6"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -127,6 +127,14 @@
             "markers": "python_version >= '3.7'",
             "version": "==3.4.1"
         },
+        "colorama": {
+            "hashes": [
+                "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44",
+                "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+            ],
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6'",
+            "version": "==0.4.6"
+        },
         "colour-converter": {
             "hashes": [
                 "sha256:32b1919d6cac744cb5d672053d80875c5842d954ab6446242f5267eb626229f8"
@@ -210,6 +218,14 @@
             "index": "pypi",
             "version": "==1.3.2"
         },
+        "ffmpeg-python": {
+            "hashes": [
+                "sha256:65225db34627c578ef0e11c8b1eb528bb35e024752f6f10b78c011f6f64c4127",
+                "sha256:ac441a0404e053f8b6a1113a77c0f452f1cfc62f6344a769475ffdc0f56c23c5"
+            ],
+            "index": "pypi",
+            "version": "==0.2.0"
+        },
         "filelock": {
             "hashes": [
                 "sha256:adbc88eabb99d2fec8c9c1b229b171f18afa655400173ddc653d5d01501fb9f2",
@@ -281,6 +297,14 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==2025.3.0"
+        },
+        "future": {
+            "hashes": [
+                "sha256:929292d34f5872e70396626ef385ec22355a1fae8ad29e1a734c3e43f9fbc216",
+                "sha256:bd2968309307861edae1458a4f8a4f3598c03be43b97521076aebf5d94c07b05"
+            ],
+            "markers": "python_version >= '2.6' and python_version not in '3.0, 3.1, 3.2'",
+            "version": "==1.0.0"
         },
         "gitdb": {
             "hashes": [
@@ -946,14 +970,6 @@
             "markers": "python_version >= '3.8'",
             "version": "==0.13.2"
         },
-        "setuptools": {
-            "hashes": [
-                "sha256:199466a166ff664970d0ee145839f5582cb9bca7a0a3a2e795b6a9cb2308e9c6",
-                "sha256:43b4ee60e10b0d0ee98ad11918e114c70701bc6051662a9a675a0496c1a158f4"
-            ],
-            "markers": "python_version >= '3.9'",
-            "version": "==76.0.0"
-        },
         "six": {
             "hashes": [
                 "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274",
@@ -1041,12 +1057,12 @@
         },
         "ultralytics": {
             "hashes": [
-                "sha256:81b7b7281a283b23f43d75a22d3dd125c7decfd57df105719d825268efe790ea",
-                "sha256:9eb38f2a39589c95e74b911e9f4e214175111e486a7f3f5911da4cbb659578ce"
+                "sha256:42521be2265e84a4834b4fdda8deff1d9e22f7827106f436034615ce3eca1c2e",
+                "sha256:e5932c14903e21da0afce87c10bc79ba2810b7b0631559e798cee535406b2152"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==8.3.91"
+            "version": "==8.3.92"
         },
         "ultralytics-thop": {
             "hashes": [
