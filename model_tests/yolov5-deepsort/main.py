@@ -11,11 +11,8 @@ from src.detector import YOLOv5Detector
 from src.tracker import DeepSortTracker
 from src.dataloader import cap
 from src.colour_getter import get_colour_from_subimage
-<<<<<<< HEAD
 from src.type_identifier import identify_vehicle_type
-=======
 from src.interfaces import * # to be changed
->>>>>>> 654fd7d (feat(data): implement basic interfaces)
 
 colour_names = webcolors.names(webcolors.CSS3)
 colour_codes = []
