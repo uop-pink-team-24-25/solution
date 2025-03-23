@@ -53,13 +53,14 @@ object_end_frame = {}
 
 track_frame_length = {}
 
-frame_count = 1;
+frame_count = 1
 
-vehicle_type = {};
+vehicle_type = {}
 
-vehicle_colour = {};
+vehicle_colour = {}
+data_source = ['./data/cam_1_1.mp4', './data/cam_1_2.mp4', './data/cam_1_3.mp4', './data/cam_2_1.mp4', './data/cam_2_2.mp4', './data/cam_2_3.mp4']
 
-while cap.isOpened():
+#while cap.isOpened():
 
 class ProcessingThread(QThread):
     """
@@ -111,7 +112,7 @@ class ProcessingThread(QThread):
 class VideoApp(QWidget):
     """
     Main application window for displaying video, graph, and buttons.
-    """
+    
     # Object Detection
     results = object_detector.run_yolo(img)  # run the yolo v5 object detector 
     
@@ -167,10 +168,12 @@ class VideoApp(QWidget):
         print("THE CARS CURRENTLY IN THE SCENE ARE: " + str([track.track_id for track in tracks_current]))
         #END
 
-    
+    """
     def __init__(self):
-        
+        self.cap = cv2.VideoCapture(data_source[0])
+        self.current_video_index = 0
         super().__init__()
+        self.frame_count = 0
         
         self.setWindowTitle("Vehicle Detection & Tracking")
         self.setGeometry(100, 100, 900, 700)  # Adjust window size
@@ -202,8 +205,9 @@ class VideoApp(QWidget):
         button_layout.addWidget(self.toggle_button)  # Add to vertical layout
 
         # Dummy1 Button
-        self.dummy1_button = QPushButton("test1", self)
+        self.dummy1_button = QPushButton("change vid", self)
         self.dummy1_button.setFixedWidth(100)
+        self.dummy1_button.clicked.connect(self.cycle_video)
         button_layout.addWidget(self.dummy1_button)  # Add to layout
 
         # Dummy2 Button
@@ -261,18 +265,30 @@ class VideoApp(QWidget):
 
         self.latest_displayed_frame = None  # Store the latest frame to avoid flickering
 
+    def resizeEvent(self, event):
+        """Resize video dynamically while keeping it within limits"""
+        if self.latest_displayed_frame is not None:
+            self.update_video_display(self.latest_displayed_frame)
+        self.video_label.adjustSize()  # 🔹 Ensure QLabel resizes properly
+        event.accept()
+    def cycle_video(self):
+        """Cycles to the next video in the data_source list."""
+        self.current_video_index = (self.current_video_index + 1) % len(data_source)
+        new_video_path = data_source[self.current_video_index]
+        print(f"[INFO] Switching to video: {new_video_path}")
+        self.change_video(new_video_path)
     def update_frame(self):
         """Sends the latest frame to processing while keeping UI smooth."""
-        global cap
-        success, img = cap.read()
+        #global self.cap
+        success, img = self.cap.read()
         if not success:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Restart video
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Restart video
             return
 
         # Send frame to background processing
         if self.processing_thread.latest_frame is None:
             self.processing_thread.latest_frame = img.copy()
-
+        """""
         # **DO NOT DISPLAY FRAME IMMEDIATELY** - Wait for processed frame
         if self.latest_displayed_frame is not None:
             img = self.latest_displayed_frame
@@ -284,14 +300,10 @@ class VideoApp(QWidget):
         qimg = QImage(img.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
 
         # Update QLabel with the processed image (with bounding boxes)
-        self.video_label.setPixmap(QPixmap.fromImage(qimg))
-        
-        def resizeEvent(self, event):
-            """Resize video dynamically while keeping it within limits"""
-            if self.latest_displayed_frame is not None:
-                self.update_video_display(self.latest_displayed_frame)
-            self.video_label.adjustSize()  # 🔹 Ensure QLabel resizes properly
-            event.accept()
+        #self.video_label.setPixmap(QPixmap.fromImage(qimg))
+        self.frame_count += 1
+        """""
+
         
     def update_video_display(self, img):
         """Updates the QLabel with the correctly scaled video frame."""
@@ -310,7 +322,10 @@ class VideoApp(QWidget):
 
         self.video_label.setPixmap(scaled_qpixmap)
 
-
+    def change_video(self, new_video_path):
+        if self.cap.isOpened():
+            self.cap.release()
+        self.cap = cv2.VideoCapture(new_video_path)
 
     def processed_frame_received(self, img, fps):
         """Receives processed frame (with bounding boxes) and updates UI."""
@@ -338,6 +353,7 @@ class VideoApp(QWidget):
         self.graph_widget.repaint()  # Force UI refresh
         self.pie_chart_view.viewport().update()  # Force pie chart to redraw
         # Convert frame to display format
+        """""
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w, ch = img.shape
         bytes_per_line = ch * w
@@ -345,6 +361,7 @@ class VideoApp(QWidget):
 
         # Update QLabel with the processed image (with bounding boxes)
         self.video_label.setPixmap(QPixmap.fromImage(qimg))
+        """""
     
     def update_graph(self, data):
         """Updates the graph with new test data."""
@@ -406,11 +423,11 @@ class VideoApp(QWidget):
     def closeEvent(self, event):
         """Ensure video capture and threads stop when closing the app."""
         print("[INFO] Closing application...")
-        cap.release()  
+        self.cap.release()  
         self.processing_thread.stop()
         event.accept()
 
-    frame_count += 1
+    #frame_count += 1
 
 
 if __name__ == "__main__":

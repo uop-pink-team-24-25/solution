@@ -1,6 +1,6 @@
 import webcolors
 import cv2
-from colourconvert import rgb2hex
+import rgb2hex
 import numpy as np
 import math
 
