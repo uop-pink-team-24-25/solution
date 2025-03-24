@@ -10,6 +10,8 @@ gitpython = "*"
 webcolors = "*"
 colour-converter = "*"
 scikit-learn = "*"
+tensorflow = "*"
+keras = "*"
 
 [dev-packages]
 matplotlib = "*"

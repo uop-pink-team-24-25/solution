@@ -38,8 +38,13 @@ def get_colour_from_subimage(key, tracks_current, img, colour_dict): #also retur
         if(bbox[3] < 45 or bbox[2] < 45): #This one determines the minimum size of the bounding box before it checks the colour, can be messed with
             #print("AGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\n") #debug code, can be removed
             return "AGAIN", None
+        if(bbox[0] < 0 | bbox[1] < 0): #FIXME: there is a problem with doing subimages on negative top lefts
+            print("AGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\n") #debug code, can be removed
+            return "AGAIN", None
         subimage = img[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]]
 
+        print(bbox)
+ 
         #if(key == "2"):
             #print("BRUH BRUH BRUH")
             #print(str(bbox[0]) + str(bbox[2]) + str(bbox[1]) + str(bbox[3]))
