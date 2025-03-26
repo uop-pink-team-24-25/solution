@@ -41,3 +41,6 @@ yolov5_deepsort:
   model_name: 'yolov5n'
   disp_fps: True 
   disp_obj_count: True
+
+  host: "127.0.0.1"
+  port: 24681
