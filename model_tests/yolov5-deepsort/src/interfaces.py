@@ -14,12 +14,10 @@ class Input(ABC):
     def isOpened(self):
         pass
 
-
-class PreProcess(ABC):
-    pass
-
 class Martial(ABC):
-    pass
+    @abstractmethod
+    def serialise(self, data: Dict) -> bytes:
+        pass
 
 class Send(ABC):
     def __init__(self, martialler: Martial):
