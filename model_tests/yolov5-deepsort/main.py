@@ -123,7 +123,7 @@ while cap.isOpened():
     
         for key in track_history: #should have got rid of the ones not in the scene
             if(key not in vehicle_colour):
-                if((frame_count - object_start_frame[key] > 5) & (key not in object_end_frame)):
+                if((frame_count - object_start_frame[key] > 3) & (key not in object_end_frame)):
                     print("detecting vehicle type for " + str(key));
                     vehicle_colour_local, subimage = get_colour_from_subimage(key, tracks_current, img, colour_dict) 
                     if(vehicle_colour_local == "AGAIN"):
@@ -136,6 +136,7 @@ while cap.isOpened():
             print("Car ID " + key + " entered at frame: " + str(object_start_frame[key]) + " and left at frame: " +  str(object_end_frame[key]) + " with colour: " + str(vehicle_colour[key]) + " and type: " + str(vehicle_type[key]))
 
         print("THE CARS CURRENTLY IN THE SCENE ARE: " + str([track.track_id for track in tracks_current]))
+        print(objects_no_longer_in_scene)
         #END
 
     
