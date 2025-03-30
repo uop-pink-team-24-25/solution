@@ -1,18 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import Dict
+from cv2 import VideoCapture, destroyAllWindows
 
 class Input(ABC):
-    @abstractmethod
+    cap: VideoCapture
+
     def read(self):
-        pass
+        return self.cap.read()
 
-    @abstractmethod
     def release(self) -> None:
-        pass
+        self.cap.release()
+        destroyAllWindows()
 
-    @abstractmethod
     def isOpened(self):
-        pass
+        return self.cap.isOpened()
+
 
 class Martial(ABC):
     @abstractmethod
