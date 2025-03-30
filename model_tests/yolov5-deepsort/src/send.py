@@ -3,8 +3,6 @@
 import yaml
 import time
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR
-from select import select
-
 
 from interfaces import Send, Martial
 from martial import JsonMartialler
