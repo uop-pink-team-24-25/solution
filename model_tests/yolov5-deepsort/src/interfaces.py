@@ -20,8 +20,7 @@ class Martial(ABC):
         pass
 
 class Send(ABC):
-    def __init__(self, martialler: Martial):
-        self.martialler = martialler
+    martialler: Martial
 
     @abstractmethod
     def send(self, data: Dict) -> bool:
