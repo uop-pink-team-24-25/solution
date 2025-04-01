@@ -9,8 +9,12 @@ deep-sort-realtime = "*"
 gitpython = "*"
 webcolors = "*"
 colour-converter = "*"
+scikit-learn = "*"
+tensorflow = "*"
+keras = "*"
 
 [dev-packages]
+matplotlib = "*"
 
 [requires]
 python_version = "3"

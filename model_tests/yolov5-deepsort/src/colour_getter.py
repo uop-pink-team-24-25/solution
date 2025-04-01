@@ -3,6 +3,7 @@ import cv2
 from colourconvert import rgb2hex
 import numpy as np
 import math
+from sklearn.cluster import KMeans
 
 
 def calc_median(histogram):
@@ -23,46 +24,80 @@ def get_colour_name(hex_colour, colour_dict):
     except ValueError:
         return get_approx_colour(hex_colour, colour_dict)
 
-def get_colour_from_subimage(key, tracks_current, img, colour_dict):
+def get_colour_from_subimage(key, tracks_current, img, colour_dict): #also returns the subimage for later passing into the vehicle type detection thing
     for track in tracks_current:
         if(track.track_id != key):
             continue;
         #print(track.track_id)
-        location = track.to_tlbr()
+        location = track.to_tlwh(orig=True)
+        #print("KEY: " + str(key))
         #print(location)
+
         bbox = location[:4].astype(int)
-        # format is top left xy, bottom right xy
-        subimage = img[bbox[0]:bbox[2], bbox[1]:bbox[3]]
 
-        histogram_blue = cv2.calcHist([subimage], [0], None, [256], [0,256])
-        histogram_blue = [x for x in histogram_blue if x != 0]
-        median_blue = np.mean(histogram_blue)
-        print("MEDIAN BLUE: " + str(median_blue))
+        bbox2 = [int(x) for x in bbox]
+        # format is top left xy, width, height
+        if(bbox2[0] < 0 | bbox2[1] < 0):#FIXME: there is a problem with doing subimages on negative top lefts
+            print("AGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\n") #debug code, can be removed
+            return "AGAIN", None
+        if(bbox[3] > 45 and bbox[2] > 45): #This one determines the minimum size of the bounding box before it checks the colour, can be messed with
+            #print("AGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\n") #debug code, can be removed
+            return "AGAIN", None
+        else:
+            print(bbox[0])
+            print(bbox[1])
+            print("this hasn't worked\n")
+        subimage = img[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]]
 
-        histogram_green = cv2.calcHist([subimage], [1], None, [256], [0,256])
-        histogram_green = [x for x in histogram_green if x != 0]
-        median_green = np.mean(histogram_green)
-        print("MEDIAN GREEN: " + str(median_green))
+        print(bbox)
+ 
+        #if(key == "2"):
+            #print("BRUH BRUH BRUH")
+            #print(str(bbox[0]) + str(bbox[2]) + str(bbox[1]) + str(bbox[3]))
+            #cv2.imshow("subimage", subimage)
+
+        #apply preprocessing
+
+        blurred_image = cv2.GaussianBlur(subimage, (1, 1), 0)
         
-        histogram_red = cv2.calcHist([subimage], [2], None, [256], [0,256])
-        histogram_red = [x for x in histogram_red if x != 0]
-        #print("HISTOGRAM RED SIZE: " + str(max(histogram_red)))
-        median_red = np.mean(histogram_red)
-        print("MEDIAN RED: " + str(median_red))
+        #subimage_hsv = cv2.cvtColor(subimage, cv2.COLOR_BGR2HSV)
 
-        if(math.isnan(median_red)):
-            median_red = 0
+        kmeans = KMeans(n_clusters=4)
 
-        if(math.isnan(median_green)):
-            median_green = 0
+        #resized_image = cv2.resize(blurred_image, (100, 100), interpolation = cv2.INTER_AREA)
 
-        if(math.isnan(median_blue)):
-            median_blue = 0
+        reshaped = blurred_image.reshape((-1, 3)) #puts it in the proper format for the kmeans clustering
 
-        car_colour = get_colour_name(webcolors.rgb_to_hex((int(median_red), int(median_green), int(median_blue))), colour_dict)
+        #fit the clustering
+
+        kmeans.fit(reshaped)
+
+        #find the largest cluster
+
+        labels = kmeans.labels_
+
+        unique, counts = np.unique(labels, return_counts=True)
+
+        cluster_sizes = dict(zip(unique, counts))
+
+        largest_cluster_label = max(cluster_sizes, key=cluster_sizes.get)
+
+        largest_cluster_centre = kmeans.cluster_centers_[largest_cluster_label]
+        #this should be a bgr value?
+
+
+        #print(largest_cluster_centre)
+        #print(kmeans.cluster_centers_)
+        #print(cluster_sizes)
+
+        largest_cluster_centre = [int(x) for x in largest_cluster_centre.tolist()]
+        
+        print(largest_cluster_centre)
+
+        car_colour = get_colour_name(webcolors.rgb_to_hex(tuple(largest_cluster_centre)), colour_dict)
 
         print("THE CAR WITH ID " + str(track.track_id) + " IS COLOURED " + car_colour)
 
-        return car_colour
+        return car_colour, subimage
 
         #TODO: look at these links https://answers.opencv.org/question/20522/get-the-median-added-to-mean-and-std-value/ https://stackoverflow.com/questions/23255903/finding-the-median-value-of-an-rgb-image-in-opencv https://www.geeksforgeeks.org/python-opencv-cv2-calchist-method/
