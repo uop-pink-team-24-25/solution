@@ -18,6 +18,8 @@ webcolors = "*"
 colour-converter = "*"
 scikit-learn = "*"
 ffmpeg-python = "*"
+keras ="*"
+tensorflow = "*"
 
 [dev-packages]
 matplotlib = "*"
