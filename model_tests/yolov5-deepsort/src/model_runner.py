@@ -34,6 +34,7 @@ class ai_model(object):
         self.frame_count = 1;
         self.vehicle_type = {};
         self.vehicle_colour = {};
+        self.sent_keys = {};
 
         colour_names = webcolors.names(webcolors.CSS3)
         colour_codes = []
@@ -167,6 +168,15 @@ class ai_model(object):
             
         # Release and destroy all windows before termination
         cap.release()
+
+    def delete_sent_items(self):
+        for key in self.sent_keys:
+            del self.objects_no_longer_in_scene[key]
+            del self.vehicle_colour[key]
+            del self.vehicle_type[key]
+            del self.object_start_frame[key]
+            del self.object_end_frame[key]
+            del self.sent_keys[key]
         
 
     #boring getters and setters
