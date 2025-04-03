@@ -4,8 +4,8 @@ import yaml
 import time
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR
 
-from interfaces import Send, Martial
-from martial import JsonMartialler
+from src.interfaces import Send, Martial
+from src.martial import JsonMartialler
 
 class SocketSend(Send):
     def __init__(self, martialler: Martial, port, host = ''):
