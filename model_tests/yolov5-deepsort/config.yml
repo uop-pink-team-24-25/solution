@@ -4,12 +4,12 @@ yolov5_deepsort:
   model_name: 'yolov5n'
   tracked_class: 'car'
   downscale_factor: 2
-  confidence_threshold: 0.1
+  confidence_threshold: 0.6
   disp_obj_detect_box: False   # Set to true if you want to view the detections from object detector 
  
  tracker:
   max_age : 30                # Maximum number of frames to keep a track alive without new detections. Default is 30
-  n_init: 1                  # Minimum number of detections needed to start a new track. Default is 3
+  n_init: 3                  # Minimum number of detections needed to start a new track. Default is 3
   nms_max_overlap: 1.0       # Maximum overlap between bounding boxes allowed for non maximal supression(NMS).If two bounding boxes overlap by more than this value, the one with the lower confidence score is suppressed. Defaults to 1.0.
   max_cosine_distance: 1.0   # Maximum cosine distance allowed for matching detections to existing tracks. If the cosine distance between the detection's feature vector and the track's feature vector is higher than this value, the detection is not matched to the track. Defaults to 0.2
   nn_budget: None            # Maximum number of features to store in the Nearest Neighbor index. If set to None, the index will have an unlimited budget. This parameter affects the memory usage of the tracker. Defaults to None.
