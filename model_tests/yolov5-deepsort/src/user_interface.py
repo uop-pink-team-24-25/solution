@@ -10,15 +10,15 @@ from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 import pyqtgraph as pg  # For plotting
 
-from src.detector import YOLOv5Detector
-from src.tracker import DeepSortTracker
-from src.dataloader import cap  # Video source
+from detector import YOLOv5Detector
+from tracker import DeepSortTracker
+from dataloader import cap  # Video source
 import webcolors
 
-from src.detector import YOLOv5Detector
-from src.tracker import DeepSortTracker
-from src.dataloader import cap
-from src.colour_getter import get_colour_from_subimage
+from detector import YOLOv5Detector
+from tracker import DeepSortTracker
+from dataloader import cap
+from colour_getter import get_colour_from_subimage
 
 colour_names = webcolors.names(webcolors.CSS3)
 colour_codes = []
@@ -62,11 +62,43 @@ data_source = ['./data/cam_1_1.mp4', './data/cam_1_2.mp4', './data/cam_1_3.mp4',
 
 #while cap.isOpened():
 
+
+def temp_run_model(img):
+    """
+    Simulates running the model and returns mock results:
+    - img: input frame
+    - Returns:
+        - processed_img: same frame with mock bounding boxes (or real if using YOLO)
+        - fps: calculated or mocked
+        - vehicle_counts: list of counts for each category (for graphs)
+    """
+    start_time = time.perf_counter()
+
+    # --- Optional: Real model (if you want to use the real one for now)
+    results = object_detector.run_yolo(img)
+    detections, num_objects = object_detector.extract_detections(
+        results, img, height=img.shape[0], width=img.shape[1]
+    )
+    tracks_current = tracker.object_tracker.update_tracks(detections, frame=img)
+    tracker.display_track({}, tracks_current, img)  # Draw bounding boxes
+
+    # --- Or: Simulate bounding boxes if model is disabled
+    # img = cv2.putText(img, "Simulated Model", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+    print(detections)
+    # FPS
+    end_time = time.perf_counter()
+    fps = int(1 / (end_time - start_time))
+
+    # Simulated vehicle counts for the graphs
+    vehicle_counts = [random.randint(1, 10) for _ in range(5)]
+
+    return img, fps, vehicle_counts
+
 class ProcessingThread(QThread):
     """
     Runs YOLOv5 & DeepSORT in a background thread.
     """
-    detection_complete = pyqtSignal(np.ndarray, int)  # Emit processed frame & FPS
+    detection_complete = pyqtSignal(np.ndarray, int, list)  # Emit processed frame & FPS
     
     # 🔹 Adjustable video display size
 
@@ -82,31 +114,17 @@ class ProcessingThread(QThread):
             if self.latest_frame is None:
                 continue  # Wait until a new frame is available
 
-            img = self.latest_frame.copy()  # Copy the latest frame
-            self.latest_frame = None  # Prevent reprocessing the same frame
+            img = self.latest_frame.copy()
+            self.latest_frame = None
 
-            start_time = time.perf_counter()
+            processed_img, fps, vehicle_counts = temp_run_model(img)
+            self.detection_complete.emit(processed_img, fps, vehicle_counts)  
 
-            # Object Detection & Tracking
-            results = object_detector.run_yolo(img)
-            detections, num_objects = object_detector.extract_detections(
-                results, img, height=img.shape[0], width=img.shape[1]
-            )
-            tracks_current = tracker.object_tracker.update_tracks(detections, frame=img)
-            tracker.display_track({}, tracks_current, img)  # Draw bounding boxes
-
-            # FPS Calculation
-            end_time = time.perf_counter()
-            fps = 1 / (end_time - start_time)
-
-            # Emit processed frame (with bounding boxes) and FPS
-            self.detection_complete.emit(img, int(fps))
-
-    def stop(self):
-        """Stops the thread."""
-        self._run_flag = False
-        self.quit()
-        self.wait()
+        def stop(self):
+            """Stops the thread."""
+            self._run_flag = False
+            self.quit()
+            self.wait()
 
 
 class VideoApp(QWidget):
@@ -371,7 +389,7 @@ class VideoApp(QWidget):
             self.cap.release()
         self.cap = cv2.VideoCapture(new_video_path)
 
-    def processed_frame_received(self, img, fps):
+    def processed_frame_received(self, img, fps, vehicle_counts):
         """Receives processed frame (with bounding boxes) and updates UI."""
         self.latest_displayed_frame = img  # Store the processed frame for the next update
         self.fps_label.setText(f"FPS: {fps}")
@@ -384,16 +402,10 @@ class VideoApp(QWidget):
 
         # 🔹 Or, if you have real detection data, use detections:
         # test_vehicle_counts = [len(detections)] * 5  # Example: All bars show total detections
-        test_vehicle_counts = [2, 5, 7, 3, 9] 
-        for i in range(len(test_vehicle_counts)):  # Modify list correctly
-            num = random.randint(0, 2)
-            if num == 1:
-                test_vehicle_counts[i] += 1
-            elif num == 2 and test_vehicle_counts[i] > 0:
-                test_vehicle_counts[i] -= 1
-        self.update_graph(test_vehicle_counts)  # Update the graph
+        self.update_graph(vehicle_counts)
+        self.update_pie_chart(vehicle_counts) # Update the graph
         
-        self.update_pie_chart(test_vehicle_counts)
+        # self.update_pie_chart(vehicle_counts)
         self.graph_widget.repaint()  # Force UI refresh
         self.pie_chart_view.viewport().update()  # Force pie chart to redraw
         # Convert frame to display format
