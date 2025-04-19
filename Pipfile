@@ -12,6 +12,7 @@ colour-converter = "*"
 scikit-learn = "*"
 tensorflow = "*"
 keras = "*"
+cython = "*"
 
 [dev-packages]
 matplotlib = "*"

@@ -9,14 +9,18 @@ from keras.models import load_model
 
 from src.detector import YOLOv5Detector
 from src.tracker import DeepSortTracker
-from src.dataloader import cap
+#from src.dataloader import cap
 from src.colour_getter import get_colour_from_subimage
 from src.type_identifier import identify_vehicle_type
 
 
 class ai_model(object):
+    def __new__(cls, config_path, show):
+        print("creating a new instance of the class")
+        instance = super(ai_model,cls).__new__(cls)
+        return instance
 
-    def __init__(self, config_path):
+    def __init__(self, config_path, show = False):
         self.__identification_model = load_model('./src/mobilenet2.h5')
 
         self.__identification_dictionary = dict(zip([i for i in range(17)], ['Ambulance', 'Barge', 'Bicycle', 'Boat', 'Bus', 'Car', 'Cart', 'Caterpillar', 'Helicopter', 'Limousine', 'Motorcycle', 'Segway', 'Snowmobile', 'Tank', 'Taxi', 'Truck', 'Van']))
@@ -36,6 +40,17 @@ class ai_model(object):
         self.vehicle_colour = {};
         self.sent_keys = {};
 
+        #moved from dataloader
+        self.cap = None
+        self.DATA_SOURCE = None
+        self.WEBCAM_ID = None
+        self.DATA_PATH = None
+        self.FRAME_WIDTH = None
+        self.FRAME_HEIGHT = None
+
+
+        self.show = show
+
         colour_names = webcolors.names(webcolors.CSS3)
         colour_codes = []
 
@@ -46,27 +61,42 @@ class ai_model(object):
         with open(config_path , 'r') as f:
             self.config =yaml.safe_load(f)['yolov5_deepsort']['main']
 
-        # Add the src directory to the module search path
-        sys.path.append(os.path.abspath('../src')) #should point here
-        
+        with open(config_path, 'r') as f:
+            dataloader_config = yaml.safe_load(f)['yolov5_deepsort']['dataloader']
+            self.DATA_SOURCE = dataloader_config['data_source']   
+            self.WEBCAM_ID = dataloader_config['webcam_id']  
+            self.DATA_PATH = dataloader_config['data_path']  
+            self.FRAME_WIDTH = dataloader_config['frame_width']
+            self.FRAME_HEIGHT = dataloader_config['frame_height'] 
+            if self.DATA_SOURCE == "webcam": 
+                self.cap = cv2.VideoCapture(self.WEBCAM_ID)
+            elif self.DATA_SOURCE == "video file": 
+                self.cap = cv2.VideoCapture(self.DATA_PATH)
+            else: print("Enter correct data source")
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.FRAME_WIDTH)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.FRAME_HEIGHT)
+
+            
+
+
         #Load the identification model from https://github.com/hoanhle/Vehicle-Type-Detection
         
         # Get YOLO Model Parameter
         self.YOLO_MODEL_NAME = self.config['model_name']
         
-        print("test")
+        print("test" + str(self.show))
         
         # Visualization Parameters
         self.DISP_FPS = self.config['disp_fps'] 
         self.DISP_OBJ_COUNT = self.config['disp_obj_count']
         
-        self.object_detector = YOLOv5Detector(model_name=self.YOLO_MODEL_NAME)
-        self.tracker = DeepSortTracker()
+        self.object_detector = YOLOv5Detector(self.YOLO_MODEL_NAME, config_path)
+        self.tracker = DeepSortTracker(config_path)
 
     def run_model(self):
-        while cap.isOpened():
+        while self.cap.isOpened():
     
-            success, img = cap.read() # Read the image frame from data source 
+            success, img = self.cap.read() # Read the image frame from data source 
          
             start_time = time.perf_counter()    #Start Timer - needed to calculate FPS
             
@@ -155,7 +185,8 @@ class ai_model(object):
             cv2.putText(img, f'TRACKER: {self.tracker.algo_name}', (20,100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
             cv2.putText(img, f'DETECTED OBJECTS: {num_objects}', (20,120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
             
-            cv2.imshow('img',img)
+            if(self.show):
+                cv2.imshow('img',img)
         
             
         
@@ -167,7 +198,7 @@ class ai_model(object):
         
             
         # Release and destroy all windows before termination
-        cap.release()
+        self.cap.release()
 
     def delete_sent_items(self):
         for key in self.sent_keys:
