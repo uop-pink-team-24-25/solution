@@ -33,7 +33,7 @@ yolov5_deepsort:
 
   data_source : "video file"   # source can be set to either "video file" or "webcam"
   webcam_id : 2                # if using external webcam. Please modify based on your system
-  data_path: "./data/Cam01_0942_14032025.mp4" # path to the video file if you are using a video as input
+  data_path: "./data/Data.mp4" # path to the video file if you are using a video as input
   frame_width:  1280
   frame_height:  720
  

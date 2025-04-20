@@ -69,6 +69,7 @@ while cap.isOpened():
     start_time = time.perf_counter()    #Start Timer - needed to calculate FPS
     
     # Object Detection
+    print("test")
     results = object_detector.run_yolo(img)  # run the yolo v5 object detector 
     
     #TODO: Maybe put in here a check to see if an object is new and to start counting its frames
@@ -125,7 +126,7 @@ while cap.isOpened():
             if(key not in vehicle_colour):
                 if((frame_count - object_start_frame[key] > 5) & (key not in object_end_frame)):
                     print("detecting vehicle type for " + str(key));
-                    vehicle_colour_local, subimage = get_colour_from_subimage(key, tracks_current, img, colour_dict) 
+                    vehicle_colour_local, subimage = get_colour_from_subimage(key, tracks_current, img, colour_dict, frame_count) 
                     if(vehicle_colour_local == "AGAIN"):
                         continue
                     vehicle_colour[key] = vehicle_colour_local
