@@ -11,7 +11,7 @@ def prepare_model(path, show):
     selected_model = ai_model(path, show);
     selected_model.run_model();
 
-if __name__ == "__main__":
+def test():
 
     multiprocessing.set_start_method('spawn')
 
@@ -58,3 +58,8 @@ if __name__ == "__main__":
     #sleep(20)
 
     #selected_model.run_model()
+
+if __name__ == "__main__":
+    model = ai_model();
+
+    model.run_model();
