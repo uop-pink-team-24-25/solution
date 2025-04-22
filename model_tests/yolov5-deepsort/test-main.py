@@ -60,6 +60,12 @@ def test():
     #selected_model.run_model()
 
 if __name__ == "__main__":
-    model = ai_model();
+
+    show = False
+
+    if("-show" in sys.argv):
+        show = True
+
+    model = ai_model("./config.yml", show);
 
     model.run_model();
