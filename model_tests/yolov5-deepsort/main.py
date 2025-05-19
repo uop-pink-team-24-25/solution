@@ -126,7 +126,7 @@ while cap.isOpened():
             if(key not in vehicle_colour):
                 if((frame_count - object_start_frame[key] > 3) & (key not in object_end_frame)):
                     print("detecting vehicle type for " + str(key));
-                    vehicle_colour_local, subimage = get_colour_from_subimage(key, tracks_current, img, colour_dict, frame_count) 
+                    vehicle_colour_local, subimage = get_colour_from_subimage(key, tracks_current, img, colour_dict) 
                     if(vehicle_colour_local == "AGAIN"):
                         continue
                     vehicle_colour[key] = vehicle_colour_local

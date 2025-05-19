@@ -1,5 +1,3 @@
-import os
-import random
 import webcolors
 import cv2
 from colourconvert import rgb2hex
@@ -26,7 +24,7 @@ def get_colour_name(hex_colour, colour_dict):
     except ValueError:
         return get_approx_colour(hex_colour, colour_dict)
 
-def get_colour_from_subimage(key, tracks_current, img, colour_dict, frame_count): #also returns the subimage for later passing into the vehicle type detection thing
+def get_colour_from_subimage(key, tracks_current, img, colour_dict): #also returns the subimage for later passing into the vehicle type detection thing
     for track in tracks_current:
         if(track.track_id != key):
             continue;
@@ -50,15 +48,6 @@ def get_colour_from_subimage(key, tracks_current, img, colour_dict, frame_count)
             print(bbox[1])
             print("this hasn't worked\n")
         subimage = img[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]]
-
-        save_path = "./kmeans_samples"
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-        # Save ~1 out of every 10 images to avoid flooding disk
-        if random.randint(1, 10) == 1:
-            filename = os.path.join(save_path, f"subimg_{key}_{frame_count}_{random.randint(1000,9999)}.png")
-            cv2.imwrite(filename, subimage)
-            print(f"Saved sample: {filename}")
 
         print(bbox)
  
