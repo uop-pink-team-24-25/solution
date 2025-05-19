@@ -240,6 +240,9 @@ class ai_model(object):
     def get_objects_no_longer_in_scene(self):
         return self.objects_no_longer_in_scene
 
+    def get_cap(self):
+        return self.cap;
+
     def set_vehicle_type(self, newval):
         self.vehicle_type = newval
 
