@@ -50,6 +50,7 @@ def get_colour_from_subimage(key, tracks_current, img, colour_dict): #also retur
             print(bbox[0])
             print(bbox[1])
             print("this hasn't worked\n")
+            return "AGAIN", None
         subimage = img[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]]
 
         print(bbox)
