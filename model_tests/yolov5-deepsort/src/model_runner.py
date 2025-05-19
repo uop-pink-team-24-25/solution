@@ -132,7 +132,9 @@ class ai_model(object):
             
                 for key in self.track_history:
                     if(not any(key == value.track_id for value in tracks_current)): #if the key has left the scene
+                        print(key + " has left the scene\n\n\n\n\n\n\n\n\n\n")
                         to_be_destroyed.append(key)
+                        self.object_end_frame[key] = self.frame_count
                     elif key not in self.object_start_frame:
                         self.object_start_frame[key] = self.frame_count
                     elif((key in self.object_end_frame) & (key not in self.vehicle_colour)):
@@ -140,9 +142,11 @@ class ai_model(object):
             
                 for key in to_be_destroyed: #deal with the tracks which have left the scene
                     self.objects_no_longer_in_scene[key] = self.track_history.get(key, [])
+                    print("added to objects no longer in scene\n\n\n\n\n")
                     del self.track_history[key]
                     self.object_end_frame[key] = self.frame_count
                     if((key in self.object_end_frame) & (key not in self.vehicle_colour)):
+                        print("removed from objects no longer in scene \n\n\n\n\n")
                         del self.object_start_frame[key]
                         del self.object_end_frame[key]
                         del self.objects_no_longer_in_scene[key]
@@ -171,6 +175,9 @@ class ai_model(object):
             #print(self.objects_no_longer_in_scene)
             #END
         
+
+            #print("OBJECTS NO LONGER IN SCENE")
+            #print(self.objects_no_longer_in_scene)
             
             # FPS Calculation
             end_time = time.perf_counter()
