@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module=".*torch.*")
 import sys
 import cv2
 import time
@@ -5,7 +7,11 @@ import yaml
 import numpy as np
 import random
 
-from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QGridLayout, QSizePolicy
+from PyQt6.QtWidgets import (
+    QApplication, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QPushButton,
+    QGridLayout, QSizePolicy, QInputDialog, QMessageBox
+)
+from PyQt6.QtWidgets import QInputDialog, QMessageBox, QLineEdit
 from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 import pyqtgraph as pg  # For plotting
@@ -19,6 +25,7 @@ from detector import YOLOv5Detector
 from tracker import DeepSortTracker
 from dataloader import cap
 from colour_getter import get_colour_from_subimage
+
 
 colour_names = webcolors.names(webcolors.CSS3)
 colour_codes = []
@@ -59,19 +66,120 @@ vehicle_type = {}
 
 vehicle_colour = {}
 data_source = ['./data/cam_1_1.mp4', './data/cam_1_2.mp4', './data/cam_1_3.mp4', './data/cam_2_1.mp4', './data/cam_2_2.mp4', './data/cam_2_3.mp4']
+#data_source = ['data\test_data.mp4']
 
 #while cap.isOpened():
 
 
+from type_identifier import identify_vehicle_type
+from tensorflow.keras.models import load_model
+from tensorflow.keras.utils import get_custom_objects
+from tensorflow.keras.layers import BatchNormalization as TF_BatchNormalization
+
+def patched_batchnorm(*args, **kwargs):
+    if isinstance(kwargs.get('axis'), list):
+        kwargs['axis'] = kwargs['axis'][0]
+    return TF_BatchNormalization(*args, **kwargs)
+# Load model for classification
+get_custom_objects()['BatchNormalization'] = patched_batchnorm
+identification_model = load_model(
+    'model_tests\yolov5-deepsort\src\mobilenet2.h5'
+)
+identification_dictionary = dict(zip(range(17), ['Ambulance', 'Barge', 'Bicycle', 'Boat', 'Bus', 'Car', 'Cart',
+                                                 'Caterpillar', 'Helicopter', 'Limousine', 'Motorcycle', 'Segway',
+                                                 'Snowmobile', 'Tank', 'Taxi', 'Truck', 'Van']))
+
+track_history = {}
+object_start_frame = {}
+object_end_frame = {}
+vehicle_type = {}
+vehicle_colour = {}
+
+frame_counter = 0  # Must be global or nonlocal if called repeatedly
+
 def temp_run_model(img):
-    """
-    Simulates running the model and returns mock results:
-    - img: input frame
-    - Returns:
-        - processed_img: same frame with mock bounding boxes (or real if using YOLO)
-        - fps: calculated or mocked
-        - vehicle_counts: list of counts for each category (for graphs)
-    """
+    global frame_counter
+    frame_counter += 1
+    start_time = time.perf_counter()
+
+    results = object_detector.run_yolo(img)
+    detections, num_objects = object_detector.extract_detections(
+        results, img, height=img.shape[0], width=img.shape[1]
+    )
+
+    tracks_current = tracker.object_tracker.update_tracks(detections, frame=img)
+    tracker.display_track(track_history, tracks_current, img)
+
+    # Track lifetime management
+    to_be_destroyed = []
+    if frame_counter % 2 == 0:
+        for track in tracks_current:
+            key = track.track_id
+            if key not in object_start_frame:
+                object_start_frame[key] = frame_counter
+
+        # Remove disappeared tracks
+        active_ids = [t.track_id for t in tracks_current]
+        for key in list(track_history.keys()):
+            if key not in active_ids:
+                to_be_destroyed.append(key)
+        
+        for key in to_be_destroyed:
+            object_end_frame[key] = frame_counter
+            if key in track_history:
+                del track_history[key]
+
+        # Detect type and colour
+        for track in tracks_current:
+            key = track.track_id
+            if key not in vehicle_colour and frame_counter - object_start_frame.get(key, 0) > 3:
+                colour_result = get_colour_from_subimage(key, tracks_current, img, colour_dict)
+                if colour_result != "AGAIN":
+                    vehicle_colour[key] = colour_result
+                    track = next((t for t in tracks_current if t.track_id == key), None)
+                    if track is not None:
+                        x1, y1, x2, y2 = map(int, track.to_tlbr())  # Get bounding box
+
+                        # Clip coordinates to image boundaries
+                        h, w = img.shape[:2]
+                        x1, y1 = max(0, x1), max(0, y1)
+                        x2, y2 = min(w, x2), min(h, y2)
+
+                        subimage = img[y1:y2, x1:x2]
+                        if subimage.size > 0:
+                            vehicle_type[key] = identify_vehicle_type(subimage, identification_model, identification_dictionary)
+    
+
+    category_map = ["Cars", "Trucks", "Motorbikes", "Buses", "Others"]
+    category_counts = {k: 0 for k in category_map}
+
+    # Simple keyword-based mapping (can be refined)
+    for vt in vehicle_type.values():
+        vt_lower = vt.lower()
+        if "car" in vt_lower or "taxi" in vt_lower or "limousine" in vt_lower:
+            category_counts["Cars"] += 1
+        elif "truck" in vt_lower or "caterpillar" in vt_lower or "van" in vt_lower:
+            category_counts["Trucks"] += 1
+        elif "motor" in vt_lower or "bike" in vt_lower:
+            category_counts["Motorbikes"] += 1
+        elif "bus" in vt_lower:
+            category_counts["Buses"] += 1
+        else:
+            category_counts["Others"] += 1
+    # Count colours for graphing
+    from collections import Counter
+
+    colour_counter = Counter(vehicle_colour.values())
+    top_colours = colour_counter.most_common(5)  # Top 5 most common
+    colour_names_for_graph = [name for name, _ in top_colours]
+    colour_counts_for_graph = [count for _, count in top_colours]
+    vehicle_counts = [category_counts[c] for c in category_map]
+
+    fps = int(1 / (time.perf_counter() - start_time))
+    return img, fps, vehicle_counts, colour_counts_for_graph, colour_names_for_graph
+"""
+def temp_run_model(img):
+
     start_time = time.perf_counter()
 
     # --- Optional: Real model (if you want to use the real one for now)
@@ -89,16 +197,16 @@ def temp_run_model(img):
     end_time = time.perf_counter()
     fps = int(1 / (end_time - start_time))
 
-    # Simulated vehicle counts for the graphs
+    # Simulated vehicle counts for the graphs 
     vehicle_counts = [random.randint(1, 10) for _ in range(5)]
 
     return img, fps, vehicle_counts
-
+"""
 class ProcessingThread(QThread):
     """
     Runs YOLOv5 & DeepSORT in a background thread.
     """
-    detection_complete = pyqtSignal(np.ndarray, int, list)  # Emit processed frame & FPS
+    detection_complete = pyqtSignal(np.ndarray, int, list, list, list)  # Emit processed frame & FPS
     
     # 🔹 Adjustable video display size
 
@@ -117,8 +225,8 @@ class ProcessingThread(QThread):
             img = self.latest_frame.copy()
             self.latest_frame = None
 
-            processed_img, fps, vehicle_counts = temp_run_model(img)
-            self.detection_complete.emit(processed_img, fps, vehicle_counts)  
+            processed_img, fps, vehicle_counts, colour_counts_for_graph, colour_names_for_graph = temp_run_model(img)
+            self.detection_complete.emit(processed_img, fps, vehicle_counts, colour_counts_for_graph, colour_names_for_graph)  
 
         def stop(self):
             """Stops the thread."""
@@ -187,11 +295,16 @@ class VideoApp(QWidget):
         #END
 
     """
+    from PyQt6.QtWidgets import QInputDialog, QMessageBox
+
+    
     def __init__(self):
         self.cap = cv2.VideoCapture(data_source[0])
         self.current_video_index = 0
         super().__init__()
         self.frame_count = 0
+        self.video_unlocked = False  # 🔐 Video is hidden until unlocked
+          # 🔒 Hide the video by default
         
         self.setWindowTitle("Vehicle Detection & Tracking")
         self.setGeometry(100, 100, 900, 700)  # Adjust window size
@@ -213,6 +326,7 @@ class VideoApp(QWidget):
         self.video_label.setMaximumSize(VIDEO_MAX_WIDTH, VIDEO_MAX_HEIGHT)
         self.video_label.setMinimumSize(200, 150)
         self.video_label.setScaledContents(False)
+        self.video_label.hide()
 
         # 🟩 Vertical layout to center video vertically
         video_container = QVBoxLayout()
@@ -258,11 +372,10 @@ class VideoApp(QWidget):
         self.toggle_button.clicked.connect(self.toggle_video)
         button_layout.addWidget(self.toggle_button)  # Add to vertical layout
 
-        # Dummy1 Button
-        self.dummy1_button = QPushButton("change vid", self)
-        self.dummy1_button.setFixedWidth(100)
-        self.dummy1_button.clicked.connect(self.cycle_video)
-        button_layout.addWidget(self.dummy1_button)  # Add to layout
+        self.unlock_button = QPushButton("Enter Password", self)
+        self.unlock_button.setFixedWidth(100)
+        self.unlock_button.clicked.connect(self.prompt_password)
+        button_layout.addWidget(self.unlock_button)
 
         # Dummy2 Button
         self.dummy2_button = QPushButton("test2", self)
@@ -325,6 +438,22 @@ class VideoApp(QWidget):
             self.update_video_display(self.latest_displayed_frame)
         self.video_label.adjustSize()  # 🔹 Ensure QLabel resizes properly
         event.accept()
+    def prompt_password(self):
+        password, ok = QInputDialog.getText(
+            self,
+            "Password Required",
+            "Enter password:",
+            echo=QLineEdit.EchoMode.Password
+        )
+        if ok:
+            if password == "mySecret123":
+                self.video_unlocked = True
+                self.video_label.show()
+                self.unlock_button.setDisabled(True)
+                QMessageBox.information(self, "Access Granted", "Video feed unlocked.")
+            else:
+                QMessageBox.warning(self, "Access Denied", "Incorrect password.")
+    
     def cycle_video(self):
         """Cycles to the next video in the data_source list."""
         self.current_video_index = (self.current_video_index + 1) % len(data_source)
@@ -389,20 +518,21 @@ class VideoApp(QWidget):
             self.cap.release()
         self.cap = cv2.VideoCapture(new_video_path)
 
-    def processed_frame_received(self, img, fps, vehicle_counts):
+    def processed_frame_received(self, img, fps, vehicle_counts, colour_counts, colour_labels):
         """Receives processed frame (with bounding boxes) and updates UI."""
         self.latest_displayed_frame = img  # Store the processed frame for the next update
         self.fps_label.setText(f"FPS: {fps}")
 
         # Convert frame to display format
-        self.update_video_display(img)
+        if self.video_unlocked:
+            self.update_video_display(img)
 
         # 🔹 Simulated Test Data for Graph 🔹
          # Example: 5 vehicle categories (Cars, Trucks, Bikes, etc.)
 
         # 🔹 Or, if you have real detection data, use detections:
         # test_vehicle_counts = [len(detections)] * 5  # Example: All bars show total detections
-        self.update_graph(vehicle_counts)
+        self.update_graph(colour_counts, colour_labels)
         self.update_pie_chart(vehicle_counts) # Update the graph
         
         # self.update_pie_chart(vehicle_counts)
@@ -419,9 +549,21 @@ class VideoApp(QWidget):
         self.video_label.setPixmap(QPixmap.fromImage(qimg))
         """""
     
-    def update_graph(self, data):
-        """Updates the graph with new test data."""
-        self.bar_graph.setOpts(height=data)
+    def update_graph(self, data, labels):
+        print("Colour bar labels:", labels)
+        print("Colour bar data:", data)
+
+        self.graph_widget.clear()
+
+        x = np.arange(len(data))
+        bar = pg.BarGraphItem(x=x, height=data, width=0.6)
+        self.graph_widget.addItem(bar)
+
+        # Make sure bottom axis is visible and styled
+        self.graph_widget.showAxis('bottom')
+        bottom_axis = self.graph_widget.getAxis('bottom')
+        bottom_axis.setTicks([[(i, label) for i, label in enumerate(labels)]])
+        bottom_axis.setStyle(tickFont=pg.Qt.QtGui.QFont('Arial', 10))
         
 
     def update_pie_chart(self, data):
