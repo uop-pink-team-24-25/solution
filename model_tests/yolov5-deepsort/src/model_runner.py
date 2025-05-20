@@ -21,6 +21,8 @@ class ai_model(object):
         return instance
 
     def __init__(self, config_path, show = False):
+        self.completed_vehicle_data = []
+
         self.__identification_model = load_model('./src/mobilenet2.h5')
 
         self.__identification_dictionary = dict(zip([i for i in range(17)], ['Ambulance', 'Barge', 'Bicycle', 'Boat', 'Bus', 'Car', 'Cart', 'Caterpillar', 'Helicopter', 'Limousine', 'Motorcycle', 'Segway', 'Snowmobile', 'Tank', 'Taxi', 'Truck', 'Van']))
@@ -97,6 +99,10 @@ class ai_model(object):
         while self.cap.isOpened():
     
             success, img = self.cap.read() # Read the image frame from data source 
+
+            if not success or img is None:
+             print("❌ Failed to read frame from video source. Exiting...")
+             break
          
             start_time = time.perf_counter()    #Start Timer - needed to calculate FPS
             
@@ -141,6 +147,16 @@ class ai_model(object):
                         to_be_destroyed.append(key)
             
                 for key in to_be_destroyed: #deal with the tracks which have left the scene
+
+                    if key in self.vehicle_type and key in self.vehicle_colour:
+                        self.completed_vehicle_data.append({
+                            'track_id': key,
+                            'start_frame': self.object_start_frame.get(key),
+                            'end_frame': self.object_end_frame.get(key),
+                            'vehicle_type': self.vehicle_type.get(key),
+                            'vehicle_colour': self.vehicle_colour.get(key)
+                        })
+
                     self.objects_no_longer_in_scene[key] = self.track_history.get(key, [])
                     print("added to objects no longer in scene\n\n\n\n\n")
                     del self.track_history[key]
@@ -219,6 +235,9 @@ class ai_model(object):
 
     #boring getters and setters
         
+    def get_completed_vehicle_data(self):
+        return self.completed_vehicle_data
+
     def get_vehicle_type(self):
         return self.vehicle_type
 
