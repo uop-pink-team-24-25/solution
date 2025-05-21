@@ -30,6 +30,7 @@ class ai_model(object):
         self.__DISP_FPS = None
         self.__DISP_OBJECT_COUNT = None
         self.config = None
+
         self.object_detector = None
         self.tracker = None
         self.track_history = {}    # Define a empty dictionary to store the previous center locations for each track ID
@@ -258,6 +259,17 @@ class ai_model(object):
 
     def get_objects_no_longer_in_scene(self):
         return self.objects_no_longer_in_scene
+
+    def get_all(self):
+        return {
+            "vehicle_type": self.vehicle_type,
+            "vehicle_colour": self.vehicle_colour,
+            "track_frame_length": self.track_frame_length,
+            "track_history": self.track_history,
+            "object_start_frame": self.object_start_frame,
+            "object_end_frame": self.object_end_frame,
+            "objects_no_longer_in_scene": self.objects_no_longer_in_scene,
+        }
 
     def set_vehicle_type(self, newval):
         self.vehicle_type = newval

@@ -4,9 +4,8 @@ import sys
 import multiprocessing
 
 from time import sleep
-
+from typing import Dict
 from src.model_runner import ai_model
-
 def prepare_model(path, show):
     selected_model = ai_model(path, show);
     selected_model.run_model();
@@ -32,6 +31,12 @@ def test():
 
     print("show = " + str(show))
     print("wow")
+
+from src.martial import JsonMartialler
+from src.send import SimpleSend
+from src.interfaces import Input, Martial, Send
+
+if __name__ == "__main__":
     # Add the src directory to the module search path
     sys.path.append(os.path.abspath('../src')) #should point here
 
@@ -110,3 +115,10 @@ if __name__ == "__main__":
 
             row["track_history"] = track_history_str
             writer.writerow(row)
+
+    martialler: Martial = JsonMartialler()
+    send: Send = SimpleSend(martialler)
+
+    selected_model.run_model()
+    data: Dict = selected_model.get_all()
+    sendable = send.send(data)

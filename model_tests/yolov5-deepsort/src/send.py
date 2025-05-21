@@ -39,6 +39,14 @@ class SocketSend(Send):
         self.conn.close()
         self.socket.close()
 
+class SimpleSend(Send):
+    def __init__(self, martialler: Martial):
+        self.martialler = martialler
+
+    def send(self, data):
+        sendable = self.martialler.serialise(data)
+        return sendable
+
 if __name__ == '__main__':
     with open('../config.yml' , 'r') as f:
         config = yaml.safe_load(f)['yolov5_deepsort']['main']
