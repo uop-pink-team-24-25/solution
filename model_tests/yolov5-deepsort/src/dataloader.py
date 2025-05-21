@@ -8,6 +8,9 @@ class StaticInput(Input):
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
 
+with open('model_tests\yolov5-deepsort\config.yml' , 'r') as f:
+    config =yaml.safe_load(f)['yolov5_deepsort']['dataloader']
+
 class CamInput(Input):
     def __init__(self, webcam_id, frame_width, frame_height):
         self.cap = cv2.VideoCapture(webcam_id)
