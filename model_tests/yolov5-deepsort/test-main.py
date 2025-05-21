@@ -6,6 +6,11 @@ import multiprocessing
 from time import sleep
 from typing import Dict
 from src.model_runner import ai_model
+from src.martial import TypeMartialler
+from src.send import CSVSend
+
+from src.interfaces import Input, Martial, Send
+
 def prepare_model(path, show):
     selected_model = ai_model(path, show);
     selected_model.run_model();
@@ -32,9 +37,6 @@ def test():
     print("show = " + str(show))
     print("wow")
 
-from src.martial import JsonMartialler
-from src.send import SimpleSend
-from src.interfaces import Input, Martial, Send
 
 if __name__ == "__main__":
     # Add the src directory to the module search path
@@ -65,60 +67,17 @@ if __name__ == "__main__":
     #selected_model.run_model()
 
 if __name__ == "__main__":
-
     show = False
-
     if("-show" in sys.argv):
         show = True
 
-    import csv
-    import json
-    import numpy as np
     from src.model_runner import ai_model
-
-    def convert_to_builtin_type(obj):
-        if isinstance(obj, dict):
-            return {k: convert_to_builtin_type(v) for k, v in obj.items()}
-        elif isinstance(obj, (list, tuple, set)):
-            return [convert_to_builtin_type(i) for i in obj]
-        elif isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        else:
-            return obj
-
 
     model = ai_model("./config.yml", show=False)
     model.run_model()
 
+    martialler: Martial = TypeMartialler()
     # Serialize objects_no_longer_in_scene into string representations
-    objects = model.get_objects_no_longer_in_scene()
+    send: Send = CSVSend(martialler)
+    data = (model.completed_vehicle_data, model.get_objects_no_longer_in_scene())
 
-    with open("output.csv", "w", newline="") as csvfile:
-        fieldnames = ["track_id", "start_frame", "end_frame", "vehicle_type", "vehicle_colour", "track_history"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-
-        for row in model.completed_vehicle_data:
-            track_id = row["track_id"]
-            # Serialize the track history if available, converting numpy types first
-            track_history = objects.get(track_id, [])
-
-            print(f"Track history for {track_id} before cleaning:", track_history)
-
-            track_history_clean = convert_to_builtin_type(track_history)
-            print(f"Track history for {track_id} after cleaning:", track_history_clean)
-            track_history_str = json.dumps(track_history_clean)
-
-            row["track_history"] = track_history_str
-            writer.writerow(row)
-
-    martialler: Martial = JsonMartialler()
-    send: Send = SimpleSend(martialler)
-
-    selected_model.run_model()
-    data: Dict = selected_model.get_all()
-    sendable = send.send(data)

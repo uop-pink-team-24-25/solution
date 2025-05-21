@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import csv
 import yaml
 import time
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR
@@ -46,6 +47,22 @@ class SimpleSend(Send):
     def send(self, data):
         sendable = self.martialler.serialise(data)
         return sendable
+
+class CSVSend(Send):
+    def __init__(self, martialler):
+        self.martialler = martialler
+
+    def send(self, data):
+        (vehicle_data, objects) = data
+
+        with open("output.csv", "w", newline="") as csvfile:
+            fieldnames = ["track_id", "start_frame", "end_frame", "vehicle_type", "vehicle_colour", "track_history"]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for row in vehicle_data:
+                writer.writerow(self.martialler.serialise((row, objects)))
+
 
 if __name__ == '__main__':
     with open('../config.yml' , 'r') as f:

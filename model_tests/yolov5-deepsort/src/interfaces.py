@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, Any
 from cv2 import VideoCapture, destroyAllWindows
 
 class Input(ABC):
@@ -18,7 +18,7 @@ class Input(ABC):
 
 class Martial(ABC):
     @abstractmethod
-    def serialise(self, data: Dict) -> bytes:
+    def serialise(self, data: Any) -> Any:
         pass
 
 class Send(ABC):

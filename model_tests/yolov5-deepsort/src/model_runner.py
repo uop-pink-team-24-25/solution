@@ -148,7 +148,6 @@ class ai_model(object):
                         to_be_destroyed.append(key)
             
                 for key in to_be_destroyed: #deal with the tracks which have left the scene
-
                     if key in self.vehicle_type and key in self.vehicle_colour:
                         self.completed_vehicle_data.append({
                             'track_id': key,
