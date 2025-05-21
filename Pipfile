@@ -20,6 +20,9 @@ scikit-learn = "*"
 ffmpeg-python = "*"
 keras ="*"
 tensorflow = "*"
+PyQt6 = "*"
+opencv-python = "*"
+pyqtgraph = "*"
 
 [dev-packages]
 matplotlib = "*"

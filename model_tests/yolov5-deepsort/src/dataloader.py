@@ -1,7 +1,7 @@
 import cv2
 import yaml
 
-with open('config.yml' , 'r') as f:
+with open('model_tests\yolov5-deepsort\config.yml' , 'r') as f:
     config =yaml.safe_load(f)['yolov5_deepsort']['dataloader']
 
 # Data Source Parameters
