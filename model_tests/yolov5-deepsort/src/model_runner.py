@@ -7,11 +7,15 @@ import webcolors
 
 from keras.models import load_model
 
-from src.detector import YOLOv5Detector
-from src.tracker import DeepSortTracker
-#from src.dataloader import cap
-from src.colour_getter import get_colour_from_subimage
-from src.type_identifier import identify_vehicle_type
+from detector import YOLOv5Detector
+from tracker import DeepSortTracker
+from colour_getter import get_colour_from_subimage
+from type_identifier import identify_vehicle_type
+
+#from src.detector import YOLOv5Detector
+#from src.tracker import DeepSortTracker
+#from src.colour_getter import get_colour_from_subimage
+#from src.type_identifier import identify_vehicle_type
 
 
 class ai_model(object):
@@ -21,7 +25,7 @@ class ai_model(object):
         return instance
 
     def __init__(self, config_path, show = False):
-        self.__identification_model = load_model('./src/mobilenet2.h5')
+        self.__identification_model = load_model('model_tests\yolov5-deepsort\src\mobilenet2.h5')
 
         self.__identification_dictionary = dict(zip([i for i in range(17)], ['Ambulance', 'Barge', 'Bicycle', 'Boat', 'Bus', 'Car', 'Cart', 'Caterpillar', 'Helicopter', 'Limousine', 'Motorcycle', 'Segway', 'Snowmobile', 'Tank', 'Taxi', 'Truck', 'Van']))
 

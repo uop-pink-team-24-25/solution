@@ -8,7 +8,7 @@ from time import sleep
 from src.model_runner import ai_model
 
 def prepare_model(path, show):
-    selected_model = ai_model(path, show);
+    selected_model = ai_model(r"C:\Users\jorda\Documents\GitHub\solution\model_tests\yolov5-deepsort\config.yml", show);
     selected_model.run_model();
 
 if __name__ == "__main__":
@@ -35,9 +35,9 @@ if __name__ == "__main__":
     # Add the src directory to the module search path
     sys.path.append(os.path.abspath('../src')) #should point here
 
-    process1 = multiprocessing.Process(target=prepare_model, args=("./config.yml", show,))
+    process1 = multiprocessing.Process(target=prepare_model, args=(r"C:\Users\jorda\Documents\GitHub\solution\model_tests\yolov5-deepsort\config.yml", show,))
 
-    process2 = multiprocessing.Process(target=prepare_model, args=("./config2.yml", show,))
+    process2 = multiprocessing.Process(target=prepare_model, args=(r"C:\Users\jorda\Documents\GitHub\solution\model_tests\yolov5-deepsort\config.yml", show,))
 
     process1.start();
 
