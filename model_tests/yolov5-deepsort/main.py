@@ -9,9 +9,10 @@ from keras.models import load_model
 
 from src.detector import YOLOv5Detector
 from src.tracker import DeepSortTracker
-from src.dataloader import cap
+from src.dataloader import construct_input
 from src.colour_getter import get_colour_from_subimage
 from src.type_identifier import identify_vehicle_type
+from src.interfaces import * # to be changed
 
 colour_names = webcolors.names(webcolors.CSS3)
 colour_codes = []
@@ -23,7 +24,9 @@ colour_dict = list(zip(colour_names, colour_codes))
 
 # Parameters from config.yml file
 with open('config.yml' , 'r') as f:
-    config =yaml.safe_load(f)['yolov5_deepsort']['main']
+    config_all = yaml.safe_load(f)['yolov5_deepsort']
+
+config = config_all['main']
 
 # Add the src directory to the module search path
 sys.path.append(os.path.abspath('src'))
@@ -36,8 +39,6 @@ identification_dictionary = dict(zip([i for i in range(17)], ['Ambulance', 'Barg
 
 # Get YOLO Model Parameter
 YOLO_MODEL_NAME = config['model_name']
-
-print("test")
 
 # Visualization Parameters
 DISP_FPS = config['disp_fps'] 
@@ -62,13 +63,23 @@ vehicle_type = {};
 
 vehicle_colour = {};
 
-while cap.isOpened():
+config_data = config_all['dataloader']
+input: Input = construct_input(
+    config_data['data_source'],
+    config_data['webcam_id'],
+    config_data['data_path'],
+    config_data['frame_width'],
+    config_data['frame_height']
+)
 
-    success, img = cap.read() # Read the image frame from data source 
+while input.isOpened():
+
+    success, img = input.read() # Read the image frame from data source
  
     start_time = time.perf_counter()    #Start Timer - needed to calculate FPS
     
     # Object Detection
+    print("test")
     results = object_detector.run_yolo(img)  # run the yolo v5 object detector 
     
     #TODO: Maybe put in here a check to see if an object is new and to start counting its frames
@@ -165,6 +176,4 @@ while cap.isOpened():
 
 
 # Release and destroy all windows before termination
-cap.release()
-
-cv2.destroyAllWindows()
+input.release()
