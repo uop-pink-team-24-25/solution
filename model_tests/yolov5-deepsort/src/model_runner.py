@@ -43,7 +43,6 @@ class ai_model(object):
         self.objects_no_longer_in_scene = {}
         self.object_start_frame = {}
         self.object_end_frame = {}
-        self.track_frame_length = {} #maybe unnecessary
         self.frame_count = 1;
         self.vehicle_type = {};
         self.vehicle_colour = {};
@@ -250,8 +249,6 @@ class ai_model(object):
     def get_vehicle_colour(self):
         return self.vehicle_colour
 
-    def get_track_frame_length(self):
-        return self.track_frame_length
 
     def get_track_history(self):
         return self.track_history
@@ -265,14 +262,15 @@ class ai_model(object):
     def get_objects_no_longer_in_scene(self):
         return self.objects_no_longer_in_scene
 
+    def get_cap(self):
+        return self.cap;
+
     def set_vehicle_type(self, newval):
         self.vehicle_type = newval
 
     def set_vehicle_colour(self, newval):
         self.vehicle_colour = newval
 
-    def set_track_frame_length(self, newval):
-        self.track_frame_length = newval
 
     def set_track_history(self, newval):
         self.track_history = newval
