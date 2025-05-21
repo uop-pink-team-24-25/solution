@@ -163,7 +163,7 @@ if __name__ == "__main__":
     base_dir = os.getcwd()
     images_directory = os.path.join(base_dir, "benchmark", "screenshots")
     labels_directory = os.path.join(base_dir, "benchmark", "labelled_screenshots")
-    detector = detector.YOLOv5Detector(model_name="yolov5n.pt")
+    detector = detector.YOLOv5Detector(model_name="yolov5n.pt", config_path=os.path.join(base_dir, "config.yml"))
     results = benchmark_model(images_directory, labels_directory, detector)
     print("\nBenchmarking Results:")
     for key, value in results.items():
