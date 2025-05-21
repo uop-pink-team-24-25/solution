@@ -37,7 +37,7 @@ def get_colour_from_subimage(key, tracks_current, img, colour_dict): #also retur
 
         # format is top left xy, width, height
 
-        if(bbox2[0] < 0 | bbox2[1] < 0):
+        if(bbox[0] < 0 | bbox[1] < 0):
             print("AGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\nAGAIN\n") #debug code, can be removed
             return "AGAIN", None
         else:
