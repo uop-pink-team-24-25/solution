@@ -79,5 +79,4 @@ if __name__ == "__main__":
     martialler: Martial = TypeMartialler()
     # Serialize objects_no_longer_in_scene into string representations
     send: Send = CSVSend(martialler)
-    data = (model.completed_vehicle_data, model.get_objects_no_longer_in_scene())
-
+    send.send((model.completed_vehicle_data, model.get_objects_no_longer_in_scene()))
