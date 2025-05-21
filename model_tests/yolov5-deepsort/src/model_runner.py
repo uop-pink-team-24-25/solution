@@ -25,7 +25,11 @@ class ai_model(object):
         return instance
 
     def __init__(self, config_path, show = False):
+        self.completed_vehicle_data = []
+
+=======
         self.__identification_model = load_model('model_tests\yolov5-deepsort\src\mobilenet2.h5')
+
 
         self.__identification_dictionary = dict(zip([i for i in range(17)], ['Ambulance', 'Barge', 'Bicycle', 'Boat', 'Bus', 'Car', 'Cart', 'Caterpillar', 'Helicopter', 'Limousine', 'Motorcycle', 'Segway', 'Snowmobile', 'Tank', 'Taxi', 'Truck', 'Van']))
 
@@ -101,6 +105,10 @@ class ai_model(object):
         while self.cap.isOpened():
     
             success, img = self.cap.read() # Read the image frame from data source 
+
+            if not success or img is None:
+             print("❌ Failed to read frame from video source. Exiting...")
+             break
          
             start_time = time.perf_counter()    #Start Timer - needed to calculate FPS
             
@@ -136,17 +144,31 @@ class ai_model(object):
             
                 for key in self.track_history:
                     if(not any(key == value.track_id for value in tracks_current)): #if the key has left the scene
+                        print(key + " has left the scene\n\n\n\n\n\n\n\n\n\n")
                         to_be_destroyed.append(key)
+                        self.object_end_frame[key] = self.frame_count
                     elif key not in self.object_start_frame:
                         self.object_start_frame[key] = self.frame_count
                     elif((key in self.object_end_frame) & (key not in self.vehicle_colour)):
                         to_be_destroyed.append(key)
             
                 for key in to_be_destroyed: #deal with the tracks which have left the scene
+
+                    if key in self.vehicle_type and key in self.vehicle_colour:
+                        self.completed_vehicle_data.append({
+                            'track_id': key,
+                            'start_frame': self.object_start_frame.get(key),
+                            'end_frame': self.object_end_frame.get(key),
+                            'vehicle_type': self.vehicle_type.get(key),
+                            'vehicle_colour': self.vehicle_colour.get(key)
+                        })
+
                     self.objects_no_longer_in_scene[key] = self.track_history.get(key, [])
+                    print("added to objects no longer in scene\n\n\n\n\n")
                     del self.track_history[key]
                     self.object_end_frame[key] = self.frame_count
                     if((key in self.object_end_frame) & (key not in self.vehicle_colour)):
+                        print("removed from objects no longer in scene \n\n\n\n\n")
                         del self.object_start_frame[key]
                         del self.object_end_frame[key]
                         del self.objects_no_longer_in_scene[key]
@@ -175,6 +197,9 @@ class ai_model(object):
             #print(self.objects_no_longer_in_scene)
             #END
         
+
+            #print("OBJECTS NO LONGER IN SCENE")
+            #print(self.objects_no_longer_in_scene)
             
             # FPS Calculation
             end_time = time.perf_counter()
@@ -216,6 +241,9 @@ class ai_model(object):
 
     #boring getters and setters
         
+    def get_completed_vehicle_data(self):
+        return self.completed_vehicle_data
+
     def get_vehicle_type(self):
         return self.vehicle_type
 
