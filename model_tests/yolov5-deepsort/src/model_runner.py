@@ -26,8 +26,6 @@ class ai_model(object):
 
     def __init__(self, config_path, show = False):
         self.completed_vehicle_data = []
-
-=======
         self.__identification_model = load_model('model_tests\yolov5-deepsort\src\mobilenet2.h5')
 
 
