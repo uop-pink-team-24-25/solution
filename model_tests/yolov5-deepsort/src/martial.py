@@ -1,11 +1,11 @@
 
 import json
 
-from typing import Self, Dict
+from typing import Dict
 from interfaces import Martial
 
 class JsonMartialler(Martial):
-    def serialise(self: Self, data: Dict) -> bytes:
+    def serialise(self, data: Dict) -> bytes:
         return json.dumps(data).encode()
 
 import json
@@ -22,7 +22,7 @@ def convert_to_builtin_type(obj):
         return obj
 
 class TypeMartialler(Martial):
-    def serialise(self: Self, data: Dict):
+    def serialise(self, data: Dict):
         (row, objects) = data
         track_id = row["track_id"]
         track_history = objects.get(track_id, [])
