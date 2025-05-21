@@ -25,5 +25,5 @@ class Send(ABC):
     martialler: Martial
 
     @abstractmethod
-    def send(self, data: Dict) -> bool:
+    def send(self, data: Any) -> bool:
         pass

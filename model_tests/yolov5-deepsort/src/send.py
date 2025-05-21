@@ -63,6 +63,8 @@ class CSVSend(Send):
             for row in vehicle_data:
                 writer.writerow(self.martialler.serialise((row, objects)))
 
+        return True
+
 
 if __name__ == '__main__':
     with open('../config.yml' , 'r') as f:
