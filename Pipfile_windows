@@ -3,20 +3,26 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[[source]]
+url = "https://download.pytorch.org/whl/cu121"
+verify_ssl = true
+name = "pytorch"
+
 [packages]
 ultralytics = "*"
 deep-sort-realtime = "*"
 gitpython = "*"
+torch = {version = ">=2.0.1", index = "pytorch"}
+torchvision = {version = ">=0.15.2", index = "pytorch"}
 webcolors = "*"
 colour-converter = "*"
 scikit-learn = "*"
-tensorflow = "*"
-keras = "*"
-cython = "*"
-PyQt6 = "*"
-pyqtgraph = "*"
 ffmpeg-python = "*"
-seaborn = "*"
+keras ="*"
+tensorflow = "*"
+PyQt6 = "*"
+opencv-python = "*"
+pyqtgraph = "*"
 
 [dev-packages]
 matplotlib = "*"

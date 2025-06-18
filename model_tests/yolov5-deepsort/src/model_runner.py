@@ -26,7 +26,7 @@ class ai_model(object):
 
     def __init__(self, config_path, show = False):
         self.completed_vehicle_data = []
-        self.__identification_model = load_model('model_tests\yolov5-deepsort\src\mobilenet2.h5')
+        self.__identification_model = load_model('mobilenet2.h5')
 
 
         self.__identification_dictionary = dict(zip([i for i in range(17)], ['Ambulance', 'Barge', 'Bicycle', 'Boat', 'Bus', 'Car', 'Cart', 'Caterpillar', 'Helicopter', 'Limousine', 'Motorcycle', 'Segway', 'Snowmobile', 'Tank', 'Taxi', 'Truck', 'Van']))

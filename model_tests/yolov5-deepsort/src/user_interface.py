@@ -33,7 +33,7 @@ VIDEO_MAX_WIDTH = 900
 VIDEO_MAX_HEIGHT = 800
 ACTUAL_WIDTH = 1920
 ACTUAL_HEIGHT = 1080
-data_source = ['model_tests/yolov5-deepsort/data/Data.mp4', 'model_tests/yolov5-deepsort/data/Data2.mp4', 'model_tests/yolov5-deepsort/data/Data3.mp4']
+data_source = ['../data/Cam02_0922_14032025.mp4', '../data/Cam02_0904_14032025.mp4', '../data/Cam02_0942_14032025.mp4'] #TODO: change to appropriate filenames for your machine
 HEATMAP_SIZE = (VIDEO_MAX_HEIGHT, VIDEO_MAX_WIDTH)  # matches display resolution
 heatmap_accumulator = np.zeros(HEATMAP_SIZE, dtype=np.uint32)
 
@@ -51,7 +51,7 @@ def patched_batchnorm(*args, **kwargs):
 get_custom_objects()['BatchNormalization'] = patched_batchnorm
 
 # Load classification model
-identification_model = load_model('model_tests/yolov5-deepsort/src/mobilenet2.h5')
+identification_model = load_model('./mobilenet2.h5')
 identification_dictionary = dict(zip(
     range(17),
     ['Ambulance', 'Barge', 'Bicycle', 'Boat', 'Bus', 'Car', 'Cart', 'Caterpillar',
@@ -59,7 +59,7 @@ identification_dictionary = dict(zip(
 ))
 
 # Initialize AI model
-MODEL = ai_model("model_tests/yolov5-deepsort/config.yml", show=False)
+MODEL = ai_model("../config.yml", show=False)
 MODEL.heatmap = np.zeros((VIDEO_MAX_HEIGHT, VIDEO_MAX_WIDTH), dtype=np.float32)
 MODEL.track_centers = {}
 MODEL.track_history = {}
