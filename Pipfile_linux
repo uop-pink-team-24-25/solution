@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ultralytics = "*"
+deep-sort-realtime = "*"
+gitpython = "*"
+webcolors = "*"
+colour-converter = "*"
+scikit-learn = "*"
+tensorflow = "*"
+keras = "*"
+cython = "*"
+
+[dev-packages]
+matplotlib = "*"
+
+[requires]
+python_version = "3"
