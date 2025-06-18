@@ -141,3 +141,4 @@ model_tests/yolov5-deepsort/benchmark/Data.mp4
 /model_tests/yolov5-deepsort/kmeans_samples
 output.csv
 output.csv
+Pipfile.lock
