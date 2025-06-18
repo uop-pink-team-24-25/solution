@@ -69,6 +69,7 @@ while cap.isOpened():
     start_time = time.perf_counter()    #Start Timer - needed to calculate FPS
     
     # Object Detection
+    print("test")
     results = object_detector.run_yolo(img)  # run the yolo v5 object detector 
     
     #TODO: Maybe put in here a check to see if an object is new and to start counting its frames

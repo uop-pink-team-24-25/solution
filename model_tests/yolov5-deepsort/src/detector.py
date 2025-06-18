@@ -3,31 +3,38 @@ import numpy as np
 import torch
 import yaml
 
-with open('config.yml' , 'r') as f:
-    config =yaml.safe_load(f)['yolov5_deepsort']['detector']
 
-TRACKED_CLASS = config['tracked_class']
-DOWNSCALE_FACTOR = config['downscale_factor']
-CONFIDENCE_THRESHOLD = config['confidence_threshold']
-DISP_OBJ_DETECT_BOX = config['disp_obj_detect_box']
 
 class YOLOv5Detector(): 
+    def __new__(cls, model_name, config_path):
+        print("NEW INSTANCE OF YOLO \n\n\n\n\n")
+        instance = super(YOLOv5Detector, cls).__new__(cls)
+        return instance
 
-    def __init__(self, model_name):
+    def __init__(self, model_name, config_path):
+        self.config = None
+        with open(config_path , 'r') as f:
+            self.config =yaml.safe_load(f)['yolov5_deepsort']['detector']
+        self.TRACKED_CLASS = self.config['tracked_class']
+        self.DOWNSCALE_FACTOR = self.config['downscale_factor']
+        self.CONFIDENCE_THRESHOLD = self.config['confidence_threshold']
+        self.DISP_OBJ_DETECT_BOX = self.config['disp_obj_detect_box']
+        
+        self.model_name = model_name
 
         self.model = self.load_model(model_name)
         self.classes = self.model.names
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print("Using Device: " , self.device)
 
-        self.downscale_factor = DOWNSCALE_FACTOR  # Reduce the resolution of the input frame by this factor to speed up object detection process
-        self.confidence_threshold = CONFIDENCE_THRESHOLD # Minimum theshold for the detection bounding box to be displayed
-        self.tracked_class = TRACKED_CLASS
+        self.downscale_factor = self.DOWNSCALE_FACTOR  # Reduce the resolution of the input frame by this factor to speed up object detection process
+        self.confidence_threshold = self.CONFIDENCE_THRESHOLD # Minimum theshold for the detection bounding box to be displayed
+        self.tracked_class = self.TRACKED_CLASS
 
-    def load_model(self , model_name):  # Load a specific yolo v5 model or the default model
+    def load_model(self , model_name, force_reload_ = False):  # Load a specific yolo v5 model or the default model
 
         if model_name: 
-            model = torch.hub.load('ultralytics/yolov5' , 'custom' , path = model_name , force_reload = True)
+            model = torch.hub.load('ultralytics/yolov5' , 'custom' , path = model_name , force_reload = force_reload_)
         else: 
             model = torch.hub.load('ultralytics/yolov5' , 'yolov5s' , pretrained = True)
         return model
@@ -65,7 +72,7 @@ class YOLOv5Detector():
                 
                 if self.class_to_label(labels[object_index]) == self.tracked_class :
                     
-                    if DISP_OBJ_DETECT_BOX: 
+                    if self.DISP_OBJ_DETECT_BOX: 
                         self.plot_boxes(x1 , y1 , x2 , y2 , frame)
                     x_center = x1 + ((x2-x1)/2)
                     y_center = y1 + ((y2 - y1) / 2)
