@@ -24,10 +24,19 @@ from colour_getter import get_colour_from_subimage
 from type_identifier import identify_vehicle_type
 from model_runner import ai_model
 
+import csv
+import json
+import os
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 # Constants
 VIDEO_MAX_WIDTH = 900
 VIDEO_MAX_HEIGHT = 800
-data_source = ['model_tests/yolov5-deepsort/data/Data.mp4', 'model_tests/yolov5-deepsort/data/Data2.mp4', 'model_tests/yolov5-deepsort/data/Data3.mp4']
+ACTUAL_WIDTH = 1920
+ACTUAL_HEIGHT = 1080
+video_files = ['Data.mp4', 'Data2.mp4']
+data_source = [str(PROJECT_ROOT / "data" / f) for f in video_files]
 HEATMAP_SIZE = (VIDEO_MAX_HEIGHT, VIDEO_MAX_WIDTH)  # matches display resolution
 heatmap_accumulator = np.zeros(HEATMAP_SIZE, dtype=np.uint32)
 
@@ -45,7 +54,7 @@ def patched_batchnorm(*args, **kwargs):
 get_custom_objects()['BatchNormalization'] = patched_batchnorm
 
 # Load classification model
-identification_model = load_model('model_tests/yolov5-deepsort/src/mobilenet2.h5')
+identification_model = load_model('./mobilenet2.h5')
 identification_dictionary = dict(zip(
     range(17),
     ['Ambulance', 'Barge', 'Bicycle', 'Boat', 'Bus', 'Car', 'Cart', 'Caterpillar',
@@ -53,7 +62,7 @@ identification_dictionary = dict(zip(
 ))
 
 # Initialize AI model
-MODEL = ai_model("model_tests/yolov5-deepsort/config.yml", show=False)
+MODEL = ai_model("../config.yml", show=False)
 MODEL.heatmap = np.zeros((VIDEO_MAX_HEIGHT, VIDEO_MAX_WIDTH), dtype=np.float32)
 MODEL.track_centers = {}
 MODEL.track_history = {}
@@ -62,6 +71,34 @@ MODEL.object_start_frame = {}
 MODEL.object_end_frame = {}
 MODEL.vehicle_colour = {}
 MODEL.vehicle_type = {}
+
+def convert_to_builtin_type(obj):
+    if isinstance(obj, dict):
+        return {k: convert_to_builtin_type(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple, set)):
+        return [convert_to_builtin_type(i) for i in obj]
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    else:
+        return obj
+
+def save_data_to_csv(model, path=str(PROJECT_ROOT / "output.csv")):
+    objects = model.get_objects_no_longer_in_scene()
+    print(f"[INFO] Saving CSV to: {os.path.abspath(path)}")
+    with open(path, "w", newline="") as csvfile:
+        fieldnames = ["track_id", "start_frame", "end_frame", "vehicle_type", "vehicle_colour", "track_history"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in model.completed_vehicle_data:
+            track_id = row["track_id"]
+            track_history = row.get("track_history", [])
+            track_history_clean = convert_to_builtin_type(track_history)
+            row["track_history"] = json.dumps(track_history_clean)
+            writer.writerow(row)
 
 def temp_run_model(img):
     
@@ -95,7 +132,21 @@ def temp_run_model(img):
         for key in list(MODEL.track_history.keys()):
             if key not in active_ids:
                 MODEL.object_end_frame[key] = MODEL.frame_count
+                MODEL.objects_no_longer_in_scene[key] = MODEL.track_centers.get(key, [])
+
+                if key in MODEL.vehicle_colour and key in MODEL.vehicle_type:
+                    MODEL.completed_vehicle_data.append({
+                        "track_id": key,
+                        "start_frame": MODEL.object_start_frame.get(key),
+                        "end_frame": MODEL.object_end_frame.get(key),
+                        "vehicle_type": MODEL.vehicle_type.get(key),
+                        "vehicle_colour": MODEL.vehicle_colour.get(key),
+                        "track_history": MODEL.track_centers.get(key, [])
+                    })
+
                 MODEL.track_history.pop(key, None)
+                MODEL.track_centers.pop(key, None)
+
 
     for track in tracks_current:
         key = track.track_id
@@ -227,6 +278,66 @@ class VideoApp(QWidget):
             button_layout.addWidget(btn)
 
         self.layout.addLayout(button_layout, 2, 2)
+        
+    import ast  # for safely parsing track_history strings
+
+    def show_saved_data_summary(self, path=str(PROJECT_ROOT / "output.csv")):
+        if not os.path.exists(path):
+            QMessageBox.warning(self, "Summary Error", "CSV file not found.")
+            return
+
+        from collections import Counter
+        import pandas as pd
+
+        df = pd.read_csv(path)
+
+        # -- Most Common Colour --
+        colour_counts = Counter(df["vehicle_colour"].dropna())
+        most_common_colour = colour_counts.most_common(1)[0][0] if colour_counts else "N/A"
+
+        # -- Average Time in Frame --
+        times = []
+        for _, row in df.iterrows():
+            try:
+                if not np.isnan(row["start_frame"]) and not np.isnan(row["end_frame"]):
+                    times.append(int(row["end_frame"]) - int(row["start_frame"]))
+            except:
+                continue
+        avg_time = round(sum(times) / len(times), 2) if times else "N/A"
+
+        # -- Most Common Exit Region --
+        import ast
+        region_counts = Counter()
+        for track_str in df["track_history"]:
+            try:
+                points = ast.literal_eval(track_str)
+                if isinstance(points, list) and len(points) > 0 and isinstance(points[-1], list):
+                    x, y = points[-1]
+                    
+                    # Divide the screen into a 3x3 grid
+                    col = "Left" if x < ACTUAL_WIDTH  / 3 else "Right" if x > 2 * ACTUAL_WIDTH / 3 else "Center"
+                    row = "Top" if y < ACTUAL_HEIGHT  / 3 else "Bottom" if y > 2 * ACTUAL_HEIGHT / 3 else "Middle"
+                    region = f"{row} {col}"
+                    region_counts[region] += 1
+            except:
+                continue
+
+        most_common_region = region_counts.most_common(1)[0][0] if region_counts else "Unknown"
+        print(f"[DEBUG] Most common region: {most_common_region}")
+        print(f"[DEBUG] All regions: {region_counts}")
+
+        # -- Display Summary --
+        summary = (
+            f"📊 **Saved Data Summary**\n\n"
+            f"• Most Common Colour: {most_common_colour}\n"
+            f"• Average Time in Frame: {avg_time} frames\n"
+            f"• Most Common Exit Region: {most_common_region}"
+        )
+
+        QMessageBox.information(self, "Saved Data Summary", summary)
+
+
+
 
     def setup_graphs(self):
         self.graph_widget = pg.PlotWidget(title="Vehicle Count")
@@ -362,6 +473,10 @@ class VideoApp(QWidget):
         else:
             self.timer.stop()
             self.toggle_button.setText("Resume")
+            print("[INFO] Saving current tracking data to CSV...")
+            save_data_to_csv(MODEL)
+            print("[INFO] Data saved to output.csv")
+            self.show_saved_data_summary()
         self.is_paused = not self.is_paused
 
     def closeEvent(self, event):
@@ -369,6 +484,9 @@ class VideoApp(QWidget):
         self.cap.release()
         self.processing_thread.stop()
         event.accept()
+        
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

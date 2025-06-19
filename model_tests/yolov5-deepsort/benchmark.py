@@ -16,7 +16,6 @@ def parse_xml_label(label_path):
     tree = ET.parse(label_path)
     root = tree.getroot()
     
-    # Extract image size from XML
     size = root.find('size')
     xml_width = int(size.find('width').text)
     xml_height = int(size.find('height').text)
@@ -30,7 +29,7 @@ def parse_xml_label(label_path):
         y1 = int(bbox.find('ymin').text)
         x2 = int(bbox.find('xmax').text)
         y2 = int(bbox.find('ymax').text)
-        boxes.append((2, x1, y1, x2, y2))  # Class ID 2 for cars
+        boxes.append((2, x1, y1, x2, y2))  
     
     return boxes, xml_width, xml_height
 
@@ -74,9 +73,7 @@ def benchmark_model(images_dir, labels_dir, detector, iou_threshold=0.5):
                 continue
             
             img_height, img_width = image.shape[:2]
-            gt_boxes, xml_width, xml_height = parse_xml_label(label_path)  # Parse XML
-
-            # Scale boxes if image dimensions don't match
+            gt_boxes, xml_width, xml_height = parse_xml_label(label_path)  
             if xml_width != img_width or xml_height != img_height:
                 scale_x = img_width / xml_width
                 scale_y = img_height / xml_height
@@ -103,11 +100,10 @@ def benchmark_model(images_dir, labels_dir, detector, iou_threshold=0.5):
             print(f"Raw YOLO Output - Bounding Boxes: {bbox_cords}")
 
 
-            # Convert detections to (class, x1, y1, x2, y2) format
             pred_boxes = []
             for det in detections:
-                bbox, conf, feature = det  # (bbox, confidence, class_name)
-                x, y, w, h = bbox  # Extract coordinates from bbox 
+                bbox, conf, feature = det  
+                x, y, w, h = bbox  
                 x1, y1, x2, y2 = x, y, x + w, y + h
                 det_class_id = 2 if feature == 'car' else -1
                 pred_boxes.append((det_class_id, x1, y1, x2, y2))
@@ -116,7 +112,7 @@ def benchmark_model(images_dir, labels_dir, detector, iou_threshold=0.5):
             print(f"Ground Truth: {gt_boxes}")  #
             print(f"Predicted Boxes: {pred_boxes}")
 
-            # ======== Compute Precision and Recall =========
+
             matched_pred = set()
             TP = 0
 
@@ -133,19 +129,17 @@ def benchmark_model(images_dir, labels_dir, detector, iou_threshold=0.5):
                         TP += 1
                         matched_pred.add(idx)
                         match_found = True
-                        break  # to limit  detections per ground truth box to 1
+                        break  
 
                 if not match_found:
-                    total_FN += 1  # A car was not detected
+                    total_FN += 1  
 
-            total_FP += (len(pred_boxes) - len(matched_pred))  # false positives
-            total_TP += TP  # Count true positives
+            total_FP += (len(pred_boxes) - len(matched_pred))  
+            total_TP += TP  
 
-    # FPS
     avg_inference_time = total_time / total_images if total_images else 0
     fps = total_images / total_time if total_time else 0
 
-    # Precision and Recall
     precision = total_TP / (total_TP + total_FP) if (total_TP + total_FP) > 0 else 0
     recall = total_TP / (total_TP + total_FN) if (total_TP + total_FN) > 0 else 0
 
