@@ -476,7 +476,7 @@ class VideoApp(QWidget):
             print("[INFO] Saving current tracking data to CSV...")
             save_data_to_csv(MODEL)
             print("[INFO] Data saved to output.csv")
-            self.show_saved_data_summary("output.csv")
+            self.show_saved_data_summary()
         self.is_paused = not self.is_paused
 
     def closeEvent(self, event):
