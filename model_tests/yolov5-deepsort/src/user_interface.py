@@ -27,13 +27,16 @@ from model_runner import ai_model
 import csv
 import json
 import os
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # Constants
 VIDEO_MAX_WIDTH = 900
 VIDEO_MAX_HEIGHT = 800
 ACTUAL_WIDTH = 1920
 ACTUAL_HEIGHT = 1080
-data_source = ['../data/Cam02_0922_14032025.mp4', '../data/Cam02_0904_14032025.mp4', '../data/Cam02_0942_14032025.mp4'] #TODO: change to appropriate filenames for your machine
+video_files = ['Data.mp4', 'Data2.mp4']
+data_source = [str(PROJECT_ROOT / "data" / f) for f in video_files]
 HEATMAP_SIZE = (VIDEO_MAX_HEIGHT, VIDEO_MAX_WIDTH)  # matches display resolution
 heatmap_accumulator = np.zeros(HEATMAP_SIZE, dtype=np.uint32)
 
@@ -83,7 +86,7 @@ def convert_to_builtin_type(obj):
     else:
         return obj
 
-def save_data_to_csv(model, path="output.csv"):
+def save_data_to_csv(model, path=str(PROJECT_ROOT / "output.csv")):
     objects = model.get_objects_no_longer_in_scene()
     print(f"[INFO] Saving CSV to: {os.path.abspath(path)}")
     with open(path, "w", newline="") as csvfile:
@@ -278,7 +281,7 @@ class VideoApp(QWidget):
         
     import ast  # for safely parsing track_history strings
 
-    def show_saved_data_summary(self, path="output.csv"):
+    def show_saved_data_summary(self, path=str(PROJECT_ROOT / "output.csv")):
         if not os.path.exists(path):
             QMessageBox.warning(self, "Summary Error", "CSV file not found.")
             return
